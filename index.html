@@ -869,8 +869,8 @@
 
   /* ── Markers ── */
   function createMarkerFor(loc) {
-    // Liebe markers are invisible until unlocked
-    if (loc.category === 'Liebe' && !isLoveUnlocked) return null;
+    // In love mode: show only Liebe. In normal mode: show everything except Liebe.
+    if (isLoveUnlocked ? loc.category !== 'Liebe' : loc.category === 'Liebe') return null;
     const color = COLORS[loc.category] || '#888';
     const div   = document.createElement('div');
     div.className = 'custom-marker'; div.style.background = color;
