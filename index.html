@@ -274,6 +274,32 @@
     }
     #admin-login-btn:hover { background: rgba(26,23,20,1); }
 
+    /* ── Love Modal ── */
+    #love-modal { width: 320px; }
+    #love-modal-body { padding: 28px 24px; display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
+    #love-modal .modal-header { border-bottom: 0.5px solid rgba(210,170,170,0.3); background: rgba(255,248,248,0.94); }
+    #love-modal .modal-title { font-family: 'Cormorant Garamond', serif; font-weight: 600; color: #9e3060; letter-spacing: 0.02em; }
+    .love-hint {
+      font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic;
+      color: #7a5060; line-height: 1.65; letter-spacing: 0.01em;
+    }
+    #love-pw {
+      width: 100%; border: 0.5px solid rgba(180,130,140,0.6); background: rgba(255,248,250,0.8);
+      padding: 10px 11px; font-family: 'Inter', sans-serif; font-size: 13px; color: #1a1714;
+      outline: none; border-radius: 0; transition: border-color 0.15s; -webkit-appearance: none; text-align: center; letter-spacing: 0.1em;
+    }
+    #love-pw:focus { border-color: rgba(158,48,96,0.5); background: rgba(255,248,250,1); }
+    #love-pw.invalid { border-color: rgba(192,57,43,0.6); }
+    #love-err { font-family: 'Inter', sans-serif; font-size: 10px; color: #c0392b; display: none; }
+    #love-err.visible { display: block; }
+    #love-login-btn {
+      width: 100%; background: rgba(158,48,96,0.88); color: rgba(255,255,255,0.95); border: none;
+      padding: 12px; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; transition: background 0.15s;
+    }
+    #love-login-btn:hover { background: rgba(158,48,96,1); }
+    .love-heart { font-size: 28px; line-height: 1; margin-bottom: -4px; }
+
     /* ── Toast ── */
     #toast {
       position: fixed; bottom: 28px; left: 50%;
@@ -463,6 +489,21 @@
     </div>
   </div>
 
+  <!-- Love Easter Egg Modal -->
+  <div id="love-modal" class="glass-modal">
+    <div class="modal-header">
+      <span class="modal-title">Nur für dich ♡</span>
+      <button class="modal-close-btn" id="love-modal-close">&times;</button>
+    </div>
+    <div id="love-modal-body">
+      <div class="love-heart">♡</div>
+      <p class="love-hint">Armand hat dir ein kleines Geheimnis hinterlassen.<br>Gib das Passwort ein, um es zu entdecken.</p>
+      <input type="password" id="love-pw" placeholder="· · · · · · ·" autocomplete="off" />
+      <div id="love-err">Das ist nicht das richtige Wort.</div>
+      <button id="love-login-btn">Öffnen</button>
+    </div>
+  </div>
+
   <!-- Lightbox -->
   <div id="lightbox">
     <button id="lightbox-close">&times;</button>
@@ -525,8 +566,10 @@
 
   const COLORS = {
     "Heimat":"#D85A30", "Kindheit":"#BA7517", "Reise":"#1D9E75",
-    "Freunde":"#378ADD", "Abenteuer":"#D4537E", "Familie":"#7F77DD"
+    "Freunde":"#378ADD", "Abenteuer":"#D4537E", "Familie":"#7F77DD",
+    "Liebe":"#C4527A"
   };
+  const LOVE_HASH = 'bd9164b0d1e5def02bce56e462e1d350a44cb7ac40ce8ff06ee687ed0902a1df';
 
   /* ── State ── */
   let LOCS             = [];
@@ -541,6 +584,9 @@
   let currentSidebarLoc = null;
   let addrTimer        = null;
   let toastTimer       = null;
+  let isLoveUnlocked   = false;
+  let loveTitleClicks  = 0;
+  let loveTitleTimer   = null;
 
   /* ── Utils ── */
   function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -638,7 +684,7 @@
   /* ── Legend & Count ── */
   const legendEl = document.getElementById('legend');
   function buildLegend() {
-    const used = [...new Set(LOCS.map(d => d.category))];
+    const used = [...new Set(LOCS.map(d => d.category))].filter(c => c !== 'Liebe' || isLoveUnlocked);
     legendEl.innerHTML = '';
     used.forEach(cat => {
       const el = document.createElement('div');
@@ -647,8 +693,22 @@
       legendEl.appendChild(el);
     });
   }
+
+  /* ── Category Select ── */
+  function rebuildCategorySelect() {
+    const sel = document.getElementById('f-category');
+    const prev = sel.value;
+    sel.innerHTML = '<option value="">Auswählen…</option>';
+    Object.keys(COLORS).filter(c => c !== 'Liebe' || isLoveUnlocked).forEach(cat => {
+      const o = document.createElement('option');
+      o.value = o.textContent = cat;
+      sel.appendChild(o);
+    });
+    if (prev) sel.value = prev;
+  }
   function updateCount() {
-    document.getElementById('badge-count').textContent = LOCS.length + (LOCS.length === 1 ? ' Ort' : ' Orte');
+    const n = LOCS.filter(l => l.category !== 'Liebe' || isLoveUnlocked).length;
+    document.getElementById('badge-count').textContent = n + (n === 1 ? ' Ort' : ' Orte');
   }
 
   /* ── Admin Auth ── */
@@ -696,6 +756,67 @@
     }
   }
 
+  /* ── Love Easter Egg ── */
+  function openLoveModal() {
+    document.getElementById('love-pw').value = '';
+    document.getElementById('love-err').classList.remove('visible');
+    document.getElementById('love-pw').classList.remove('invalid');
+    document.getElementById('love-modal').classList.add('visible');
+    document.getElementById('modal-overlay').classList.add('visible');
+    setTimeout(() => document.getElementById('love-pw').focus(), 60);
+  }
+  function closeLoveModal() {
+    document.getElementById('love-modal').classList.remove('visible');
+    if (!document.getElementById('add-modal').classList.contains('visible') &&
+        !document.getElementById('admin-modal').classList.contains('visible')) {
+      document.getElementById('modal-overlay').classList.remove('visible');
+    }
+  }
+  async function tryLoveLogin() {
+    const pw = document.getElementById('love-pw').value;
+    if (!pw) return;
+    const hash = await sha256(pw);
+    if (hash === LOVE_HASH) {
+      sessionStorage.setItem('paula_love', 'yes');
+      setLoveState(true);
+      closeLoveModal();
+      showToast('Willkommen in Paulas Herzstück ♡', 'success');
+    } else {
+      document.getElementById('love-pw').classList.add('invalid');
+      document.getElementById('love-err').classList.add('visible');
+      setTimeout(() => {
+        document.getElementById('love-pw').classList.remove('invalid');
+        document.getElementById('love-err').classList.remove('visible');
+      }, 2200);
+    }
+  }
+  function setLoveState(active) {
+    isLoveUnlocked = active;
+    // Rebuild legend and category select to include/exclude Liebe
+    buildLegend();
+    rebuildCategorySelect();
+    // Show hidden love markers
+    rebuildAllMarkers();
+  }
+  function checkLoveSession() {
+    if (sessionStorage.getItem('paula_love') === 'yes') setLoveState(true);
+  }
+
+  // Easter Egg: triple-click on the title
+  document.getElementById('topbar-title').addEventListener('click', () => {
+    loveTitleClicks++;
+    clearTimeout(loveTitleTimer);
+    if (loveTitleClicks >= 3) {
+      loveTitleClicks = 0;
+      if (!isLoveUnlocked) openLoveModal();
+    } else {
+      loveTitleTimer = setTimeout(() => { loveTitleClicks = 0; }, 900);
+    }
+  });
+  document.getElementById('love-modal-close').addEventListener('click', closeLoveModal);
+  document.getElementById('love-login-btn').addEventListener('click', tryLoveLogin);
+  document.getElementById('love-pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryLoveLogin(); });
+
   /* ── Sidebar ── */
   const sidebar = document.getElementById('sidebar');
 
@@ -742,6 +863,8 @@
 
   /* ── Markers ── */
   function createMarkerFor(loc) {
+    // Liebe markers are invisible until unlocked
+    if (loc.category === 'Liebe' && !isLoveUnlocked) return null;
     const color = COLORS[loc.category] || '#888';
     const div   = document.createElement('div');
     div.className = 'custom-marker'; div.style.background = color;
@@ -758,7 +881,7 @@
   }
 
   function rebuildAllMarkers() {
-    markerInstances.forEach(m => map.removeLayer(m));
+    markerInstances.forEach(m => m && map.removeLayer(m));
     markerInstances = LOCS.map(loc => createMarkerFor(loc));
   }
 
@@ -768,11 +891,8 @@
     closeSidebar();
   });
 
-  /* ── Category Select ── */
   const catSelect = document.getElementById('f-category');
-  Object.keys(COLORS).forEach(cat => {
-    const o = document.createElement('option'); o.value = o.textContent = cat; catSelect.appendChild(o);
-  });
+  rebuildCategorySelect();
 
   /* ── Add / Edit Form ── */
   function openAddForm() {
@@ -982,7 +1102,7 @@
       const idx = LOCS.indexOf(editingLoc);
       data.id = editingLoc.id;
       Object.assign(editingLoc, data);
-      map.removeLayer(markerInstances[idx]);
+      if (markerInstances[idx]) map.removeLayer(markerInstances[idx]);
       markerInstances[idx] = createMarkerFor(editingLoc);
       const ref = editingLoc; editingLoc = null;
       buildLegend(); updateCount();
@@ -1008,7 +1128,7 @@
   async function doDelete(loc) {
     const idx = LOCS.indexOf(loc);
     if (idx === -1) return;
-    map.removeLayer(markerInstances[idx]);
+    if (markerInstances[idx]) map.removeLayer(markerInstances[idx]);
     LOCS.splice(idx, 1);
     markerInstances.splice(idx, 1);
     buildLegend(); updateCount(); closeSidebar();
@@ -1082,6 +1202,7 @@
     buildLegend();
     updateCount();
     checkAdminSession();
+    checkLoveSession();
   }
 
   init();
