@@ -20,7 +20,7 @@
       display: flex; align-items: center; justify-content: space-between; padding: 0 28px;
     }
     #topbar-left { display: flex; flex-direction: column; gap: 2px; }
-    #topbar-title { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600; color: #1a1714; letter-spacing: 0.01em; line-height: 1; }
+    #topbar-title { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600; color: #1a1714; letter-spacing: 0.01em; line-height: 1; user-select: none; -webkit-user-select: none; cursor: default; }
     #topbar-subtitle { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 300; color: #9c9590; letter-spacing: 0.09em; text-transform: uppercase; }
     #legend { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #7a7470; letter-spacing: 0.04em; white-space: nowrap; }
@@ -792,11 +792,10 @@
   }
   function setLoveState(active) {
     isLoveUnlocked = active;
-    // Rebuild legend and category select to include/exclude Liebe
     buildLegend();
     rebuildCategorySelect();
-    // Show hidden love markers
     rebuildAllMarkers();
+    updateCount();
   }
   function checkLoveSession() {
     if (sessionStorage.getItem('paula_love') === 'yes') setLoveState(true);
