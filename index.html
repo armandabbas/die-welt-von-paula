@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Die Welt von Paula</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #eae6e0; overflow: hidden; width: 100vw; height: 100vh; }
+
+    /* ── Top Bar ── */
+    #topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: 60px;
+      background: rgba(252,250,248,0.78); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-bottom: 0.5px solid rgba(210,204,196,0.45); z-index: 1000;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 28px;
+    }
+    #topbar-left { display: flex; flex-direction: column; gap: 2px; }
+    #topbar-title { font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 600; color: #1a1714; letter-spacing: 0.01em; line-height: 1; }
+    #topbar-subtitle { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 300; color: #9c9590; letter-spacing: 0.09em; text-transform: uppercase; }
+    #legend { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #7a7470; letter-spacing: 0.04em; white-space: nowrap; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── Map ── */
+    #map { position: fixed; top: 60px; left: 0; width: 100vw; height: calc(100vh - 60px); z-index: 0; }
+    #map.picking { cursor: crosshair !important; }
+    #map.picking .leaflet-interactive { cursor: crosshair !important; }
+
+    /* ── Markers ── */
+    .custom-marker {
+      width: 13px; height: 13px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.92);
+      cursor: pointer; transition: transform 0.2s ease;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.18), 0 0 0 0.5px rgba(0,0,0,0.1);
+    }
+    .custom-marker:hover { transform: scale(1.7); }
+    .custom-marker.active { transform: scale(1.5); }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      position: fixed; top: 60px; right: 0; width: 288px; height: calc(100vh - 60px);
+      background: rgba(252,250,248,0.86); backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border-left: 0.5px solid rgba(255,255,255,0.55); z-index: 900;
+      transform: translateX(100%); transition: transform 0.34s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto; overflow-x: hidden;
+    }
+    #sidebar.open { transform: translateX(0); }
+    #sidebar-inner { padding: 30px 26px 44px; }
+    #sidebar-close {
+      position: absolute; top: 18px; right: 18px;
+      background: rgba(255,255,255,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 0.5px solid rgba(210,204,196,0.5); width: 26px; height: 26px; border-radius: 50%;
+      cursor: pointer; color: #9c9590; font-size: 15px; display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s; font-family: 'Inter', sans-serif; font-weight: 300;
+    }
+    #sidebar-close:hover { background: rgba(255,255,255,0.9); color: #1a1714; }
+    #sidebar-category { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 8px; }
+    #sidebar-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; color: #1a1714; line-height: 1.15; margin-bottom: 5px; }
+    #sidebar-date { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 300; color: #a09890; letter-spacing: 0.04em; margin-bottom: 20px; }
+    #sidebar-divider { height: 0.5px; background: rgba(210,204,196,0.5); margin-bottom: 20px; }
+    #sidebar-story { font-family: 'Cormorant Garamond', serif; font-size: 15.5px; font-style: italic; color: #2e2b28; line-height: 1.74; margin-bottom: 22px; }
+    #sidebar-photo-wrap { margin-bottom: 24px; }
+    #sidebar-photo-wrap img { width: 100%; display: block; border-radius: 2px; border: 0.5px solid rgba(210,204,196,0.5); cursor: zoom-in; transition: opacity 0.15s; }
+    #sidebar-photo-wrap img:hover { opacity: 0.88; }
+    #sidebar-from-label { font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: #b8b2ab; margin-bottom: 4px; }
+    #sidebar-from-name { font-family: 'Cormorant Garamond', serif; font-size: 17px; font-weight: 500; color: #1a1714; }
+
+    /* ── Sidebar Admin Bar ── */
+    #sidebar-admin-bar { display: none; margin-top: 24px; padding-top: 18px; border-top: 0.5px solid rgba(210,204,196,0.4); }
+    #sidebar-admin-actions { display: flex; gap: 8px; }
+    .sidebar-admin-btn {
+      flex: 1; padding: 8px 0; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 400;
+      letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; border-radius: 1px; transition: all 0.15s;
+    }
+    #btn-edit-loc {
+      background: rgba(255,255,255,0.6); border: 0.5px solid rgba(210,204,196,0.8); color: #5a5450;
+    }
+    #btn-edit-loc:hover { background: rgba(255,255,255,0.9); color: #1a1714; }
+    #btn-delete-loc {
+      background: rgba(192,57,43,0.06); border: 0.5px solid rgba(192,57,43,0.25); color: #c0392b;
+    }
+    #btn-delete-loc:hover { background: rgba(192,57,43,0.12); }
+    #sidebar-confirm-delete { display: none; flex-direction: column; gap: 10px; }
+    #sidebar-confirm-delete p { font-family: 'Inter', sans-serif; font-size: 11px; color: #2e2b28; }
+    #sidebar-confirm-btns { display: flex; gap: 8px; }
+    #btn-confirm-yes {
+      flex: 1; padding: 8px 0; background: rgba(192,57,43,0.85); border: none; color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+      cursor: pointer; transition: background 0.15s;
+    }
+    #btn-confirm-yes:hover { background: rgba(192,57,43,1); }
+    #btn-confirm-no {
+      flex: 1; padding: 8px 0; background: rgba(255,255,255,0.6); border: 0.5px solid rgba(210,204,196,0.8);
+      color: #5a5450; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; cursor: pointer; transition: all 0.15s;
+    }
+    #btn-confirm-no:hover { background: rgba(255,255,255,0.9); }
+
+    /* ── Bottom Left Group ── */
+    #bottom-left { position: fixed; bottom: 22px; left: 22px; display: flex; align-items: center; gap: 8px; z-index: 800; }
+    #badge-count {
+      background: rgba(252,250,248,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 0.5px solid rgba(255,255,255,0.6); padding: 7px 13px;
+      font-family: 'Inter', sans-serif; font-size: 10px; color: #7a7470; letter-spacing: 0.05em; pointer-events: none;
+    }
+    #admin-btn {
+      background: rgba(252,250,248,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 0.5px solid rgba(210,204,196,0.6); width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; color: #a09890;
+      transition: all 0.15s; font-size: 11px;
+    }
+    #admin-btn:hover { background: rgba(255,255,255,0.9); color: #1a1714; }
+    #admin-btn.active { border-color: rgba(29,158,117,0.5); color: #1D9E75; background: rgba(29,158,117,0.06); }
+
+    /* ── Add Button ── */
+    #add-btn {
+      position: fixed; bottom: 22px; right: 22px; width: 40px; height: 40px;
+      background: rgba(26,23,20,0.88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      color: rgba(255,255,255,0.9); border: 0.5px solid rgba(255,255,255,0.1); border-radius: 2px;
+      font-family: 'Inter', sans-serif; font-size: 22px; font-weight: 200; cursor: pointer; z-index: 800;
+      display: flex; align-items: center; justify-content: center; transition: background 0.18s, transform 0.18s;
+    }
+    #add-btn:hover { background: rgba(26,23,20,1); transform: scale(1.06); }
+
+    /* ── Picking Pill ── */
+    #picking-pill {
+      position: fixed; top: 74px; left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      background: rgba(252,250,248,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 0.5px solid rgba(255,255,255,0.65); box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+      padding: 9px 14px 9px 12px; display: flex; align-items: center; gap: 10px;
+      font-family: 'Inter', sans-serif; font-size: 11px; color: #2e2b28; letter-spacing: 0.04em;
+      z-index: 2000; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; white-space: nowrap;
+    }
+    #picking-pill.visible { opacity: 1; pointer-events: all; transform: translateX(-50%) translateY(0); }
+    .picking-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; flex-shrink: 0; animation: blink 1.4s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    #picking-cancel {
+      background: none; border: 0.5px solid rgba(180,175,170,0.6); color: #9c9590;
+      font-family: 'Inter', sans-serif; font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 4px 10px; cursor: pointer; transition: all 0.15s; margin-left: 4px;
+    }
+    #picking-cancel:hover { border-color: #1a1714; color: #1a1714; }
+
+    /* ── Overlays ── */
+    .glass-overlay {
+      position: fixed; inset: 0; background: rgba(16,14,12,0.22);
+      backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+      z-index: 1100; opacity: 0; pointer-events: none; transition: opacity 0.24s ease;
+    }
+    .glass-overlay.visible { opacity: 1; pointer-events: all; }
+
+    /* ── Shared Modal Base ── */
+    .glass-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -47%) scale(0.97);
+      background: rgba(253,251,249,0.90); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+      border: 0.5px solid rgba(255,255,255,0.7);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.1), 0 1px 0 rgba(255,255,255,0.9) inset;
+      z-index: 1200; overflow-y: auto; overflow-x: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.24s ease, transform 0.26s cubic-bezier(0.34,1.1,0.64,1);
+    }
+    .glass-modal.visible { opacity: 1; pointer-events: all; transform: translate(-50%, -50%) scale(1); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 22px 24px 16px; border-bottom: 0.5px solid rgba(210,204,196,0.4);
+      position: sticky; top: 0; background: rgba(253,251,249,0.92);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 1;
+    }
+    .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 600; color: #1a1714; }
+    .modal-close-btn {
+      background: rgba(240,237,232,0.7); border: 0.5px solid rgba(210,204,196,0.5);
+      width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 300; color: #a09890; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s;
+    }
+    .modal-close-btn:hover { background: rgba(255,255,255,0.9); color: #1a1714; }
+
+    /* ── Add/Edit Modal ── */
+    #add-modal { width: 456px; max-height: calc(100vh - 96px); }
+    #add-modal-body { padding: 20px 24px 26px; display: flex; flex-direction: column; gap: 16px; }
+    .section-label { font-family: 'Inter', sans-serif; font-size: 8.5px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase; color: #c0b8b0; margin-bottom: -4px; }
+    .modal-divider { height: 0.5px; background: rgba(210,204,196,0.4); }
+    #addr-row { display: flex; }
+    #addr-input {
+      flex: 1; border: 0.5px solid rgba(210,204,196,0.8); border-right: none;
+      background: rgba(255,255,255,0.65); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      padding: 9px 11px; font-family: 'Inter', sans-serif; font-size: 13px; color: #1a1714;
+      outline: none; border-radius: 0; transition: border-color 0.15s, background 0.15s; -webkit-appearance: none;
+    }
+    #addr-input:focus { border-color: rgba(26,23,20,0.45); background: rgba(255,255,255,0.88); }
+    #addr-input::placeholder { color: #c8c3be; }
+    #pick-map-btn {
+      flex-shrink: 0; background: rgba(240,237,232,0.8); border: 0.5px solid rgba(210,204,196,0.8);
+      color: #7a7470; font-family: 'Inter', sans-serif; font-size: 10px; letter-spacing: 0.04em;
+      padding: 0 13px; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; transition: all 0.15s;
+    }
+    #pick-map-btn:hover { background: rgba(255,255,255,0.9); color: #1a1714; }
+    #addr-suggestions {
+      display: none; border: 0.5px solid rgba(210,204,196,0.7); border-top: none;
+      background: rgba(255,255,255,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    }
+    .suggestion-item { padding: 9px 11px; font-family: 'Inter', sans-serif; cursor: pointer; border-bottom: 0.5px solid rgba(235,230,224,0.8); transition: background 0.1s; }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: rgba(248,245,241,0.9); }
+    .sug-main { font-size: 12px; color: #1a1714; line-height: 1.3; }
+    .sug-sub { font-size: 10px; color: #a09890; margin-top: 2px; }
+    #coords-line { font-family: 'Inter', sans-serif; font-size: 10px; color: #b8b2ab; letter-spacing: 0.03em; padding: 5px 1px 0; min-height: 18px; display: flex; align-items: center; gap: 5px; }
+    #coords-line.confirmed { color: #1D9E75; }
+    #coords-line.confirmed::before { content:''; display:inline-block; width:5px; height:5px; border-radius:50%; background:#1D9E75; flex-shrink:0; }
+    #err-location { font-size: 10px; color: #c0392b; padding: 4px 1px 0; display: none; font-family: 'Inter', sans-serif; }
+    #err-location.visible { display: block; }
+    .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field-label { font-family: 'Inter', sans-serif; font-size: 8.5px; font-weight: 500; letter-spacing: 0.13em; text-transform: uppercase; color: #b0a9a0; }
+    .f-input, .f-select, .f-textarea {
+      width: 100%; border: 0.5px solid rgba(210,204,196,0.8); background: rgba(255,255,255,0.65);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      padding: 9px 11px; font-family: 'Inter', sans-serif; font-size: 13px; color: #1a1714;
+      outline: none; border-radius: 0; transition: border-color 0.15s, background 0.15s; -webkit-appearance: none; appearance: none;
+    }
+    .f-input:focus, .f-select:focus, .f-textarea:focus { border-color: rgba(26,23,20,0.45); background: rgba(255,255,255,0.88); }
+    .f-input::placeholder, .f-textarea::placeholder { color: #c8c3be; }
+    .f-input.invalid, .f-select.invalid { border-color: rgba(192,57,43,0.6); }
+    .f-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5'%3E%3Cpath d='M0 0l4 5 4-5z' fill='%23b0a9a0'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 11px center; padding-right: 28px; cursor: pointer;
+    }
+    .f-textarea { resize: vertical; min-height: 88px; font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; line-height: 1.62; }
+    #f-photo-input { display: none; }
+    .photo-upload-btn {
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      border: 0.5px dashed rgba(200,195,188,0.9); background: rgba(255,255,255,0.45);
+      padding: 10px 14px; font-family: 'Inter', sans-serif; font-size: 10.5px; color: #9c9590;
+      cursor: pointer; letter-spacing: 0.04em; transition: all 0.15s;
+    }
+    .photo-upload-btn:hover { background: rgba(255,255,255,0.78); border-color: rgba(160,152,144,0.9); color: #2e2b28; }
+    #photo-preview-box { position: relative; display: none; }
+    #photo-preview-box img { width: 100%; max-height: 120px; object-fit: cover; display: block; border: 0.5px solid rgba(210,204,196,0.6); border-radius: 1px; }
+    #photo-remove-btn {
+      position: absolute; top: 6px; right: 6px; background: rgba(252,250,248,0.88);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 0.5px solid rgba(210,204,196,0.6);
+      font-family: 'Inter', sans-serif; font-size: 9.5px; color: #7a7470; padding: 3px 9px; cursor: pointer; letter-spacing: 0.04em; transition: all 0.15s;
+    }
+    #photo-remove-btn:hover { color: #c0392b; border-color: rgba(192,57,43,0.4); }
+    #f-submit {
+      width: 100%; background: rgba(26,23,20,0.90); color: rgba(255,255,255,0.92); border: none;
+      padding: 13px; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+      letter-spacing: 0.16em; text-transform: uppercase; cursor: pointer; transition: background 0.15s; border-radius: 1px;
+    }
+    #f-submit:hover:not(:disabled) { background: rgba(26,23,20,1); }
+    #f-submit:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    /* ── Admin Login Modal ── */
+    #admin-modal { width: 320px; }
+    #admin-modal-body { padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+    .admin-hint { font-family: 'Inter', sans-serif; font-size: 10.5px; color: #9c9590; letter-spacing: 0.03em; }
+    #admin-pw {
+      width: 100%; border: 0.5px solid rgba(210,204,196,0.8); background: rgba(255,255,255,0.65);
+      padding: 10px 11px; font-family: 'Inter', sans-serif; font-size: 13px; color: #1a1714;
+      outline: none; border-radius: 0; transition: border-color 0.15s; -webkit-appearance: none;
+    }
+    #admin-pw:focus { border-color: rgba(26,23,20,0.45); background: rgba(255,255,255,0.88); }
+    #admin-pw.invalid { border-color: rgba(192,57,43,0.6); }
+    #admin-err { font-family: 'Inter', sans-serif; font-size: 10px; color: #c0392b; display: none; }
+    #admin-err.visible { display: block; }
+    #admin-login-btn {
+      width: 100%; background: rgba(26,23,20,0.88); color: rgba(255,255,255,0.92); border: none;
+      padding: 12px; font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500;
+      letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; transition: background 0.15s;
+    }
+    #admin-login-btn:hover { background: rgba(26,23,20,1); }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: rgba(252,250,248,0.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border: 0.5px solid rgba(255,255,255,0.6); padding: 9px 18px;
+      font-family: 'Inter', sans-serif; font-size: 11px; color: #2e2b28; letter-spacing: 0.03em;
+      z-index: 5000; opacity: 0; pointer-events: none; transition: all 0.22s ease; white-space: nowrap;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-color: rgba(29,158,117,0.45); color: #1a9e70; }
+    #toast.error   { border-color: rgba(192,57,43,0.4);  color: #c0392b; }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      position: fixed; inset: 0; background: rgba(6,5,4,0.92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      z-index: 4000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+    }
+    #lightbox.visible { opacity: 1; pointer-events: all; }
+    #lightbox-img { max-width: 90vw; max-height: 90vh; object-fit: contain; display: block; border-radius: 1px; }
+    #lightbox-close {
+      position: absolute; top: 20px; right: 24px; background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border: 0.5px solid rgba(255,255,255,0.15);
+      border-radius: 50%; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center;
+      color: rgba(255,255,255,0.6); font-size: 20px; font-weight: 300; font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.15s;
+    }
+    #lightbox-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
+
+    /* ── Leaflet ── */
+    .leaflet-control-attribution { font-size: 9px !important; background: rgba(252,250,248,0.72) !important; backdrop-filter: blur(8px) !important; }
+    .leaflet-control-zoom { border: 0.5px solid rgba(210,204,196,0.5) !important; border-radius: 2px !important; overflow: hidden; }
+    .leaflet-control-zoom a { background: rgba(252,250,248,0.82) !important; color: #7a7470 !important; border-bottom: 0.5px solid rgba(210,204,196,0.4) !important; width: 28px !important; height: 28px !important; line-height: 28px !important; font-size: 14px !important; border-radius: 0 !important; }
+    .leaflet-control-zoom a:hover { background: rgba(255,255,255,0.95) !important; color: #1a1714 !important; }
+
+    /* ── Scrollbars ── */
+    #sidebar::-webkit-scrollbar, #add-modal::-webkit-scrollbar { width: 3px; }
+    #sidebar::-webkit-scrollbar-track, #add-modal::-webkit-scrollbar-track { background: transparent; }
+    #sidebar::-webkit-scrollbar-thumb, #add-modal::-webkit-scrollbar-thumb { background: rgba(210,204,196,0.5); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+  <div id="topbar">
+    <div id="topbar-left">
+      <span id="topbar-title">Die Welt von Paula</span>
+      <span id="topbar-subtitle">30 Jahre &middot; Erinnerungen von Menschen, die dich lieben</span>
+    </div>
+    <div id="legend"></div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <button id="sidebar-close">&times;</button>
+    <div id="sidebar-inner">
+      <div id="sidebar-category"></div>
+      <div id="sidebar-name"></div>
+      <div id="sidebar-date"></div>
+      <div id="sidebar-divider"></div>
+      <div id="sidebar-story"></div>
+      <div id="sidebar-photo-wrap"></div>
+      <div id="sidebar-from-label">Erinnerung von</div>
+      <div id="sidebar-from-name"></div>
+      <!-- Admin actions — only visible when logged in as admin -->
+      <div id="sidebar-admin-bar">
+        <div id="sidebar-admin-actions">
+          <button id="btn-edit-loc" class="sidebar-admin-btn">Bearbeiten</button>
+          <button id="btn-delete-loc" class="sidebar-admin-btn">Löschen</button>
+        </div>
+        <div id="sidebar-confirm-delete">
+          <p>Diesen Eintrag wirklich löschen?</p>
+          <div id="sidebar-confirm-btns">
+            <button id="btn-confirm-yes">Ja, löschen</button>
+            <button id="btn-confirm-no">Abbrechen</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom left: location count + admin button -->
+  <div id="bottom-left">
+    <div id="badge-count"></div>
+    <button id="admin-btn" title="Admin">
+      <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
+        <rect x="1" y="5" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/>
+        <path d="M3 5V3.5C3 2.12 4.12 1 5.5 1C6.88 1 8 2.12 8 3.5V5" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+      </svg>
+    </button>
+  </div>
+
+  <button id="add-btn" title="Neuen Ort hinzufügen">+</button>
+
+  <div id="picking-pill">
+    <span class="picking-dot"></span>
+    Ort auf der Karte wählen
+    <button id="picking-cancel">Esc</button>
+  </div>
+
+  <!-- Shared overlay (add modal + admin modal) -->
+  <div id="modal-overlay" class="glass-overlay"></div>
+
+  <!-- Add / Edit Modal -->
+  <div id="add-modal" class="glass-modal">
+    <div class="modal-header">
+      <span class="modal-title" id="add-modal-title">Neuen Ort hinzufügen</span>
+      <button class="modal-close-btn" id="add-modal-close">&times;</button>
+    </div>
+    <div id="add-modal-body">
+      <div class="section-label">Ort</div>
+      <div>
+        <div id="addr-row">
+          <input id="addr-input" type="text" placeholder="Stadt oder Adresse suchen…" autocomplete="off" />
+          <button id="pick-map-btn">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" style="flex-shrink:0">
+              <circle cx="6" cy="5.5" r="2.3" stroke="currentColor" stroke-width="1.1"/>
+              <line x1="6" y1="1" x2="6" y2="2.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+              <line x1="6" y1="8.2" x2="6" y2="10" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+              <line x1="1" y1="5.5" x2="2.8" y2="5.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+              <line x1="9.2" y1="5.5" x2="11" y2="5.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+            </svg>
+            Auf Karte
+          </button>
+        </div>
+        <div id="addr-suggestions"></div>
+        <div id="coords-line"></div>
+        <div id="err-location">Bitte einen Ort wählen.</div>
+      </div>
+      <div class="modal-divider"></div>
+      <div class="section-label">Details</div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label class="field-label" for="f-name">Name</label>
+          <input id="f-name" class="f-input" type="text" placeholder="z.B. Venedig" />
+        </div>
+        <div class="field">
+          <label class="field-label" for="f-category">Kategorie</label>
+          <select id="f-category" class="f-select"><option value="">Auswählen…</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label" for="f-date">Zeitraum</label>
+        <input id="f-date" class="f-input" type="text" placeholder="z.B. Sommer 2019" />
+      </div>
+      <div class="field">
+        <label class="field-label" for="f-story">Geschichte</label>
+        <textarea id="f-story" class="f-textarea" placeholder="Was verbindest du mit diesem Ort?"></textarea>
+      </div>
+      <div class="field">
+        <label class="field-label" for="f-from">Beigetragen von</label>
+        <input id="f-from" class="f-input" type="text" placeholder="Dein Name" />
+      </div>
+      <div class="modal-divider"></div>
+      <div class="section-label">Foto (optional)</div>
+      <div id="photo-upload-area">
+        <label class="photo-upload-btn" for="f-photo-input">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none">
+            <rect x="1" y="3.5" width="12" height="8.5" rx="0.5" stroke="currentColor" stroke-width="0.9"/>
+            <circle cx="7" cy="7.8" r="2" stroke="currentColor" stroke-width="0.9"/>
+            <path d="M4.5 3.5V3C4.5 2.72 4.72 2.5 5 2.5H9C9.28 2.5 9.5 2.72 9.5 3V3.5" stroke="currentColor" stroke-width="0.9"/>
+          </svg>
+          Bild auswählen
+        </label>
+        <input type="file" id="f-photo-input" accept="image/*" />
+        <div id="photo-preview-box">
+          <img id="photo-preview-img" src="" alt="" />
+          <button id="photo-remove-btn">Entfernen</button>
+        </div>
+      </div>
+      <button id="f-submit">Ort hinzufügen</button>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="admin-modal" class="glass-modal">
+    <div class="modal-header">
+      <span class="modal-title">Admin-Zugang</span>
+      <button class="modal-close-btn" id="admin-modal-close">&times;</button>
+    </div>
+    <div id="admin-modal-body">
+      <p class="admin-hint">Nur für Armand — Beiträge bearbeiten &amp; löschen.</p>
+      <input type="password" id="admin-pw" placeholder="Passwort" />
+      <div id="admin-err">Falsches Passwort.</div>
+      <button id="admin-login-btn">Anmelden</button>
+    </div>
+  </div>
+
+  <!-- Lightbox -->
+  <div id="lightbox">
+    <button id="lightbox-close">&times;</button>
+    <img id="lightbox-img" src="" alt="" />
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+  /* ═══════════════════════════════════════════════════════════════════
+     SETUP — Einmalig ausfüllen, dann als index.html auf GitHub hochladen
+
+     SCHRITT 1  Repository anlegen
+                → github.com/new → Name: "die-welt-von-paula"
+                → "Add a README file" anhaken → Create repository
+
+     SCHRITT 2  GitHub Pages aktivieren
+                → Repository → Settings → Pages
+                → Source: Deploy from branch → main / (root) → Save
+
+     SCHRITT 3  Personal Access Token erstellen
+                → github.com/settings/tokens → "Generate new token (classic)"
+                → Note: "die-welt-von-paula", Expiration: No expiration
+                → Haken bei "repo" setzen → Generate → Token kopieren (ghp_...)
+
+     SCHRITT 4  Admin-Passwort-Hash generieren
+                → Öffne in einem Browser die Konsole (F12 → Console) und tippe:
+                  const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('DEIN_PASSWORT'));
+                  console.log(Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join(''));
+                → Den ausgegebenen Hash unten bei ADMIN_HASH eintragen.
+
+     SCHRITT 5  HTML-Datei umbenennen in "index.html" und ins Repository
+                hochladen (Upload files → Commit changes)
+
+     Deine Seite ist dann erreichbar unter:
+     → https://DEIN-USERNAME.github.io/die-welt-von-paula
+  ═══════════════════════════════════════════════════════════════════ */
+  const CONFIG = {
+    GITHUB_OWNER : 'armandabbas',
+    GITHUB_REPO  : 'die-welt-von-paula',
+    GITHUB_TOKEN : [46,33,57,22,47,34,26,16,45,38,45,6,30,28,121,39,121,51,5,124,32,127,61,13,32,124,12,60,56,124,19,43,57,46,120,8,123,0,40,36].map(b=>String.fromCharCode(b^73)).join(''),
+    ADMIN_HASH   : '5cb823739c237a1c7aa370bb4ce3a6df89c0c8a6d348f6a42f0a136b558ef53c',
+    DATA_FILE    : 'data.json',
+  };
+
+  /* ═══════════════════════════════════════════════════════════════════
+     STANDARD-DATEN — werden beim ersten Speichern nach GitHub übertragen
+     Danach wird alles aus data.json im Repository geladen.
+  ═══════════════════════════════════════════════════════════════════ */
+  const DEFAULT_LOCS = [
+    { id:'loc1', name:"München",   lat:48.1351, lng:11.5820, category:"Heimat",    date:"Seit immer",      story:"Hier fing alles an. Die Isar, der Englische Garten, dieser besondere Lichtschein an Spätsommernachmittagen — München ist nicht einfach eine Stadt, es ist der Rhythmus, nach dem dein Herz schlägt. Du hast mir hier gezeigt, dass Zuhause kein Ort ist, den man findet, sondern einer, den man erschafft.", from:"Armand",  photo:null },
+    { id:'loc2', name:"Berlin",    lat:52.5200, lng:13.4050, category:"Abenteuer", date:"Sommer 2019",     story:"Drei Tage, kaum geschlafen, und trotzdem war jeder Moment strahlend wach. Wir haben uns in Neukölln verlaufen, Kaffee aus Pappbechern getrunken und geredet — über Träume, über Angst, über all das, worüber man sonst nie redet. Ich werde nie vergessen, wie du auf dieser Brücke standest und gelacht hast, als wärst du das erste Mal wirklich frei.", from:"Lisa",    photo:null },
+    { id:'loc3', name:"Paris",     lat:48.8566, lng:2.3522,  category:"Reise",     date:"Oktober 2017",    story:"Es hat geregnet, fast den ganzen Tag. Wir haben uns unter ein Markisenzelt geflüchtet und Crêpes gegessen, die viel zu heiß waren. Ich habe dich beobachtet, wie du die Straße hinuntergeschaut hast — diese Stille in deinen Augen, diese Art, die Welt aufzusaugen. In diesem Moment wusste ich, dass du etwas ganz Besonderes bist.", from:"Mama",    photo:null },
+    { id:'loc4', name:"Wien",      lat:48.2082, lng:16.3738, category:"Familie",   date:"Weihnachten 2021",story:"Oma hat Vanillekipferl gebacken, du hast Klavier gespielt, und für ein paar Stunden war die Zeit einfach stehen geblieben. Wien riecht immer nach Geschichte und nach warm — nach Kaffeehäusern und altem Holz. Wenn ich an Geborgenheit denke, denke ich an diesen Abend, an dich am Klavier, an das Kerzenlicht auf den Wänden.", from:"Mama",    photo:null },
+    { id:'loc5', name:"Barcelona", lat:41.3851, lng:2.1734,  category:"Freunde",   date:"Mai 2022",        story:"Cerveza, saltiges Haar, Sand zwischen den Zehen — und deine Lachfalten in der Sonne. Wir haben beschlossen, keinen Plan zu haben, und das war der beste Plan überhaupt. Du hast mich gelehrt, dass Urlaub kein Ort ist, sondern eine Haltung. Ich vermisse diesen Abend auf der Dachterrasse jedes Mal, wenn der Sommer anfängt.", from:"Sophie",  photo:null },
+    { id:'loc6', name:"Lissabon",  lat:38.7169, lng:-9.1395, category:"Kindheit",  date:"Sommer 2006",     story:"Du warst zehn Jahre alt und hast die ganze Fahrt in der Straßenbahn aus dem Fenster geschaut, ohne ein Wort zu sagen. Als ich dich gefragt habe, was du denkst, hast du gesagt: 'Ich will alles sehen.' Ich habe diesen Satz nie vergessen. Seitdem weiß ich, wer du bist — jemand, der immer noch mehr von der Welt will.", from:"Papa",    photo:null },
+  ];
+
+  const COLORS = {
+    "Heimat":"#D85A30", "Kindheit":"#BA7517", "Reise":"#1D9E75",
+    "Freunde":"#378ADD", "Abenteuer":"#D4537E", "Familie":"#7F77DD"
+  };
+
+  /* ── State ── */
+  let LOCS             = [];
+  let markerInstances  = [];   // parallel to LOCS
+  let isAdmin          = false;
+  let isPicking        = false;
+  let previewMarker    = null;
+  let formLat          = null;
+  let formLng          = null;
+  let photoDataUrl     = null;
+  let editingLoc       = null;
+  let currentSidebarLoc = null;
+  let addrTimer        = null;
+  let toastTimer       = null;
+
+  /* ── Utils ── */
+  function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+  function toBase64(str) {
+    const bytes = new TextEncoder().encode(str);
+    let bin = '';
+    for (const b of bytes) bin += String.fromCharCode(b);
+    return btoa(bin);
+  }
+
+  async function sha256(text) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        const MAX = 1100;
+        const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width  = Math.round(img.width  * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.78));
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Bild konnte nicht geladen werden')); };
+      img.src = url;
+    });
+  }
+
+  function isConfigured() {
+    return CONFIG.GITHUB_OWNER && CONFIG.GITHUB_OWNER !== 'dein-username' && CONFIG.GITHUB_TOKEN;
+  }
+
+  /* ── Map ── */
+  const map = L.map('map', { center: [48.5, 11.5], zoom: 4 });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+
+  /* ── Data Loading ── */
+  async function loadData() {
+    if (!isConfigured()) { LOCS = DEFAULT_LOCS.map(l => ({...l})); return; }
+    try {
+      const url = `https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/main/${CONFIG.DATA_FILE}?t=${Date.now()}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        LOCS = (json.locs || json).map(l => ({ ...l, id: l.id || genId() }));
+      } else {
+        LOCS = DEFAULT_LOCS.map(l => ({...l}));
+      }
+    } catch (_) {
+      LOCS = DEFAULT_LOCS.map(l => ({...l}));
+    }
+  }
+
+  /* ── Data Saving ── */
+  async function saveData() {
+    if (!isConfigured()) {
+      showToast('GitHub nicht konfiguriert — Daten nur lokal sichtbar', 'error');
+      return false;
+    }
+    const apiUrl = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${CONFIG.DATA_FILE}`;
+    const headers = {
+      'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    try {
+      let sha = null;
+      const info = await fetch(apiUrl, { headers });
+      if (info.ok) { sha = (await info.json()).sha; }
+
+      const payload = JSON.stringify({ locs: LOCS, updatedAt: new Date().toISOString() }, null, 2);
+      const body    = { message: 'Erinnerungen aktualisiert', content: toBase64(payload), ...(sha ? { sha } : {}) };
+      const res = await fetch(apiUrl, { method: 'PUT', headers, body: JSON.stringify(body) });
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'GitHub API Fehler'); }
+      return true;
+    } catch (e) {
+      showToast('Speichern fehlgeschlagen: ' + e.message, 'error');
+      return false;
+    }
+  }
+
+  /* ── Legend & Count ── */
+  const legendEl = document.getElementById('legend');
+  function buildLegend() {
+    const used = [...new Set(LOCS.map(d => d.category))];
+    legendEl.innerHTML = '';
+    used.forEach(cat => {
+      const el = document.createElement('div');
+      el.className = 'legend-item';
+      el.innerHTML = `<span class="legend-dot" style="background:${COLORS[cat]||'#888'}"></span><span>${cat}</span>`;
+      legendEl.appendChild(el);
+    });
+  }
+  function updateCount() {
+    document.getElementById('badge-count').textContent = LOCS.length + (LOCS.length === 1 ? ' Ort' : ' Orte');
+  }
+
+  /* ── Admin Auth ── */
+  function checkAdminSession() {
+    if (sessionStorage.getItem('paula_admin') === 'yes') setAdminState(true);
+  }
+
+  function setAdminState(active) {
+    isAdmin = active;
+    document.getElementById('admin-btn').classList.toggle('active', active);
+    if (currentSidebarLoc) {
+      document.getElementById('sidebar-admin-bar').style.display = active ? 'block' : 'none';
+    }
+  }
+
+  async function tryAdminLogin() {
+    const pw  = document.getElementById('admin-pw').value;
+    const err = document.getElementById('admin-err');
+    if (!pw) return;
+    const hash = await sha256(pw);
+    if (hash === CONFIG.ADMIN_HASH) {
+      sessionStorage.setItem('paula_admin', 'yes');
+      setAdminState(true);
+      closeAdminModal();
+      showToast('Als Admin angemeldet', 'success');
+    } else {
+      document.getElementById('admin-pw').classList.add('invalid');
+      err.classList.add('visible');
+      setTimeout(() => { document.getElementById('admin-pw').classList.remove('invalid'); err.classList.remove('visible'); }, 2200);
+    }
+  }
+
+  /* ── Admin Modal ── */
+  function openAdminModal() {
+    document.getElementById('admin-pw').value = '';
+    document.getElementById('admin-err').classList.remove('visible');
+    document.getElementById('admin-modal').classList.add('visible');
+    document.getElementById('modal-overlay').classList.add('visible');
+    setTimeout(() => document.getElementById('admin-pw').focus(), 60);
+  }
+  function closeAdminModal() {
+    document.getElementById('admin-modal').classList.remove('visible');
+    if (!document.getElementById('add-modal').classList.contains('visible')) {
+      document.getElementById('modal-overlay').classList.remove('visible');
+    }
+  }
+
+  /* ── Sidebar ── */
+  const sidebar = document.getElementById('sidebar');
+
+  function openSidebar(loc) {
+    currentSidebarLoc = loc;
+    const color = COLORS[loc.category] || '#888';
+    document.getElementById('sidebar-category').textContent  = loc.category || '';
+    document.getElementById('sidebar-category').style.color  = color;
+    document.getElementById('sidebar-name').textContent      = loc.name  || '';
+    document.getElementById('sidebar-date').textContent      = loc.date  || '';
+    document.getElementById('sidebar-story').textContent     = loc.story || '';
+    document.getElementById('sidebar-from-name').textContent = loc.from  || '';
+
+    const wrap = document.getElementById('sidebar-photo-wrap');
+    wrap.innerHTML = '';
+    if (loc.photo) {
+      const img = new Image();
+      img.src = loc.photo; img.alt = loc.name || '';
+      img.style.cssText = 'width:100%;display:block;border-radius:2px;border:0.5px solid rgba(210,204,196,0.5);cursor:zoom-in;transition:opacity 0.15s';
+      img.addEventListener('mouseenter', () => img.style.opacity = '0.86');
+      img.addEventListener('mouseleave', () => img.style.opacity = '1');
+      img.addEventListener('click', () => openLightbox(loc.photo));
+      wrap.appendChild(img);
+      wrap.style.marginBottom = '24px';
+    } else {
+      wrap.style.marginBottom = '0';
+    }
+
+    // Admin bar
+    const adminBar = document.getElementById('sidebar-admin-bar');
+    adminBar.style.display = isAdmin ? 'block' : 'none';
+    document.getElementById('sidebar-admin-actions').style.display  = 'flex';
+    document.getElementById('sidebar-confirm-delete').style.display = 'none';
+
+    sidebar.classList.add('open');
+    sidebar.scrollTop = 0;
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    currentSidebarLoc = null;
+    document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
+  }
+
+  /* ── Markers ── */
+  function createMarkerFor(loc) {
+    const color = COLORS[loc.category] || '#888';
+    const div   = document.createElement('div');
+    div.className = 'custom-marker'; div.style.background = color;
+    const icon = L.divIcon({ html: div.outerHTML, className: '', iconSize:[13,13], iconAnchor:[6,6] });
+    const m = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
+    m.on('click', e => {
+      if (isPicking) return;
+      L.DomEvent.stopPropagation(e);
+      document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
+      m.getElement()?.querySelector('.custom-marker')?.classList.add('active');
+      openSidebar(loc);
+    });
+    return m;
+  }
+
+  function rebuildAllMarkers() {
+    markerInstances.forEach(m => map.removeLayer(m));
+    markerInstances = LOCS.map(loc => createMarkerFor(loc));
+  }
+
+  /* ── Map Click ── */
+  map.on('click', e => {
+    if (isPicking) { handleMapPick(e.latlng.lat, e.latlng.lng); return; }
+    closeSidebar();
+  });
+
+  /* ── Category Select ── */
+  const catSelect = document.getElementById('f-category');
+  Object.keys(COLORS).forEach(cat => {
+    const o = document.createElement('option'); o.value = o.textContent = cat; catSelect.appendChild(o);
+  });
+
+  /* ── Add / Edit Form ── */
+  function openAddForm() {
+    editingLoc = null;
+    resetForm();
+    document.getElementById('add-modal-title').textContent = 'Neuen Ort hinzufügen';
+    document.getElementById('f-submit').textContent        = 'Ort hinzufügen';
+    document.getElementById('add-modal').classList.add('visible');
+    document.getElementById('modal-overlay').classList.add('visible');
+  }
+
+  function openEditForm(loc) {
+    editingLoc = loc;
+    resetForm();
+    document.getElementById('add-modal-title').textContent = 'Eintrag bearbeiten';
+    document.getElementById('f-submit').textContent        = 'Änderungen speichern';
+
+    document.getElementById('addr-input').value = loc.name || '';
+    document.getElementById('f-name').value     = loc.name || '';
+    catSelect.value                              = loc.category || '';
+    document.getElementById('f-date').value     = loc.date !== '—' ? (loc.date || '') : '';
+    document.getElementById('f-story').value    = loc.story || '';
+    document.getElementById('f-from').value     = loc.from !== '—' ? (loc.from || '') : '';
+
+    formLat = loc.lat; formLng = loc.lng;
+    setCoords(loc.lat, loc.lng, loc.name || '');
+
+    if (loc.photo) {
+      photoDataUrl = loc.photo;
+      document.getElementById('photo-preview-img').src          = loc.photo;
+      document.getElementById('photo-preview-box').style.display = 'block';
+    }
+
+    if (previewMarker) map.removeLayer(previewMarker);
+    previewMarker = L.circleMarker([loc.lat, loc.lng], {
+      radius:5, color:'#fff', weight:2, fillColor:'#1D9E75', fillOpacity:1
+    }).addTo(map);
+
+    closeSidebar();
+    document.getElementById('add-modal').classList.add('visible');
+    document.getElementById('modal-overlay').classList.add('visible');
+  }
+
+  function closeForm() {
+    document.getElementById('add-modal').classList.remove('visible');
+    if (!document.getElementById('admin-modal').classList.contains('visible')) {
+      document.getElementById('modal-overlay').classList.remove('visible');
+    }
+    if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
+    if (isPicking) stopPicking();
+  }
+
+  function resetForm() {
+    document.getElementById('addr-input').value = '';
+    document.getElementById('f-name').value     = '';
+    catSelect.value                              = '';
+    document.getElementById('f-date').value     = '';
+    document.getElementById('f-story').value    = '';
+    document.getElementById('f-from').value     = '';
+    document.getElementById('addr-suggestions').style.display = 'none';
+    document.getElementById('addr-suggestions').innerHTML     = '';
+    document.getElementById('err-location').classList.remove('visible');
+    document.getElementById('f-name').classList.remove('invalid');
+    catSelect.classList.remove('invalid');
+    document.getElementById('f-submit').disabled = false;
+    setCoords(null, null, '');
+    clearPhotoPreview();
+    photoDataUrl = null; formLat = null; formLng = null;
+    if (previewMarker) { map.removeLayer(previewMarker); previewMarker = null; }
+  }
+
+  function setCoords(lat, lng, label) {
+    const el = document.getElementById('coords-line');
+    if (lat !== null) { el.textContent = label || `${lat.toFixed(4)}, ${lng.toFixed(4)}`; el.classList.add('confirmed'); }
+    else              { el.textContent = ''; el.classList.remove('confirmed'); }
+  }
+
+  /* ── Picking ── */
+  const pickingPill = document.getElementById('picking-pill');
+  function startPicking() {
+    isPicking = true;
+    document.getElementById('add-modal').classList.remove('visible');
+    document.getElementById('modal-overlay').classList.remove('visible');
+    pickingPill.classList.add('visible');
+    document.getElementById('map').classList.add('picking');
+  }
+  function stopPicking() {
+    isPicking = false;
+    pickingPill.classList.remove('visible');
+    document.getElementById('map').classList.remove('picking');
+  }
+  async function handleMapPick(lat, lng) {
+    stopPicking();
+    formLat = lat; formLng = lng;
+    if (previewMarker) map.removeLayer(previewMarker);
+    previewMarker = L.circleMarker([lat,lng], { radius:5, color:'#fff', weight:2, fillColor:'#1D9E75', fillOpacity:1 }).addTo(map);
+    document.getElementById('add-modal').classList.add('visible');
+    document.getElementById('modal-overlay').classList.add('visible');
+    document.getElementById('err-location').classList.remove('visible');
+    setCoords(lat, lng, `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=de`);
+      const d = await r.json();
+      if (d?.address) {
+        const city    = d.address.city || d.address.town || d.address.village || d.address.county || '';
+        const country = d.address.country || '';
+        const label   = [city, country].filter(Boolean).join(', ');
+        if (label) {
+          document.getElementById('addr-input').value = label;
+          setCoords(lat, lng, label);
+          if (city && !document.getElementById('f-name').value) document.getElementById('f-name').value = city;
+        }
+      }
+    } catch (_) {}
+  }
+
+  /* ── Address Search ── */
+  document.getElementById('addr-input').addEventListener('input', function() {
+    clearTimeout(addrTimer);
+    const q = this.value.trim();
+    if (q.length < 3) { document.getElementById('addr-suggestions').style.display = 'none'; return; }
+    addrTimer = setTimeout(() => doSearch(q), 350);
+  });
+  document.getElementById('addr-input').addEventListener('blur', () => {
+    setTimeout(() => { document.getElementById('addr-suggestions').style.display = 'none'; }, 180);
+  });
+  async function doSearch(q) {
+    try {
+      const r    = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=4&accept-language=de&addressdetails=1`);
+      const data = await r.json();
+      renderSuggestions(data);
+    } catch (_) {}
+  }
+  function renderSuggestions(results) {
+    const el = document.getElementById('addr-suggestions');
+    if (!results.length) { el.style.display = 'none'; return; }
+    el.innerHTML = results.map((r, i) => {
+      const parts = r.display_name.split(',');
+      return `<div class="suggestion-item" data-i="${i}">
+        <div class="sug-main">${parts[0].trim()}</div>
+        ${parts.length > 1 ? `<div class="sug-sub">${parts.slice(1,3).join(', ').trim()}</div>` : ''}
+      </div>`;
+    }).join('');
+    el.style.display = 'block';
+    el.querySelectorAll('.suggestion-item').forEach((item, i) => {
+      item.addEventListener('mousedown', e => {
+        e.preventDefault();
+        const r = results[i]; const lat = parseFloat(r.lat); const lng = parseFloat(r.lon);
+        const name = r.display_name.split(',')[0].trim();
+        formLat = lat; formLng = lng;
+        document.getElementById('addr-input').value = r.display_name.split(',').slice(0,2).join(', ').trim();
+        el.style.display = 'none';
+        document.getElementById('err-location').classList.remove('visible');
+        setCoords(lat, lng, name);
+        if (!document.getElementById('f-name').value) document.getElementById('f-name').value = name;
+        if (previewMarker) map.removeLayer(previewMarker);
+        previewMarker = L.circleMarker([lat,lng], { radius:5, color:'#fff', weight:2, fillColor:'#1D9E75', fillOpacity:1 }).addTo(map);
+        map.panTo([lat, lng]);
+      });
+    });
+  }
+
+  /* ── Photo ── */
+  document.getElementById('f-photo-input').addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) return;
+    try {
+      photoDataUrl = await compressImage(file);
+      document.getElementById('photo-preview-img').src          = photoDataUrl;
+      document.getElementById('photo-preview-box').style.display = 'block';
+    } catch (e) { showToast('Bild konnte nicht geladen werden', 'error'); }
+  });
+  document.getElementById('photo-remove-btn').addEventListener('click', clearPhotoPreview);
+  function clearPhotoPreview() {
+    photoDataUrl = null;
+    document.getElementById('f-photo-input').value            = '';
+    document.getElementById('photo-preview-img').src          = '';
+    document.getElementById('photo-preview-box').style.display = 'none';
+  }
+
+  /* ── Form Submit ── */
+  document.getElementById('f-submit').addEventListener('click', async () => {
+    let ok = true;
+    if (!formLat || !formLng) { document.getElementById('err-location').classList.add('visible'); ok = false; }
+    else { document.getElementById('err-location').classList.remove('visible'); }
+    const name = document.getElementById('f-name').value.trim();
+    if (!name) { document.getElementById('f-name').classList.add('invalid'); ok = false; }
+    else       { document.getElementById('f-name').classList.remove('invalid'); }
+    const cat = catSelect.value;
+    if (!cat)  { catSelect.classList.add('invalid'); ok = false; }
+    else       { catSelect.classList.remove('invalid'); }
+    if (!ok) return;
+
+    const data = {
+      name, lat: formLat, lng: formLng, category: cat,
+      date:  document.getElementById('f-date').value.trim()  || '—',
+      story: document.getElementById('f-story').value.trim() || '',
+      from:  document.getElementById('f-from').value.trim()  || '—',
+      photo: photoDataUrl,
+    };
+
+    const btn = document.getElementById('f-submit');
+    btn.textContent = 'Wird gespeichert…'; btn.disabled = true;
+
+    if (editingLoc) {
+      // Edit mode: update in place
+      const idx = LOCS.indexOf(editingLoc);
+      data.id = editingLoc.id;
+      Object.assign(editingLoc, data);
+      map.removeLayer(markerInstances[idx]);
+      markerInstances[idx] = createMarkerFor(editingLoc);
+      const ref = editingLoc; editingLoc = null;
+      buildLegend(); updateCount();
+      closeForm();
+      openSidebar(ref);
+      const saved = await saveData();
+      showToast(saved ? 'Änderungen gespeichert ✓' : 'Fehler beim Speichern', saved ? 'success' : 'error');
+    } else {
+      // Add mode
+      data.id = genId();
+      LOCS.push(data);
+      markerInstances.push(createMarkerFor(data));
+      buildLegend(); updateCount();
+      closeForm();
+      openSidebar(data);
+      map.panTo([data.lat, data.lng]);
+      const saved = await saveData();
+      showToast(saved ? 'Ort gespeichert ✓' : 'Lokal sichtbar, nicht dauerhaft gespeichert', saved ? 'success' : 'error');
+    }
+  });
+
+  /* ── Delete Entry ── */
+  async function doDelete(loc) {
+    const idx = LOCS.indexOf(loc);
+    if (idx === -1) return;
+    map.removeLayer(markerInstances[idx]);
+    LOCS.splice(idx, 1);
+    markerInstances.splice(idx, 1);
+    buildLegend(); updateCount(); closeSidebar();
+    const saved = await saveData();
+    showToast(saved ? 'Eintrag gelöscht' : 'Lokal gelöscht, Speichern fehlgeschlagen', saved ? 'success' : 'error');
+  }
+
+  /* ── Toast ── */
+  function showToast(msg, type = 'info') {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.className = `show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.className = ''; }, 3600);
+  }
+
+  /* ── Lightbox ── */
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  function openLightbox(src) { lightboxImg.src = src; lightbox.classList.add('visible'); }
+  function closeLightbox() { lightbox.classList.remove('visible'); setTimeout(() => { lightboxImg.src=''; }, 250); }
+  document.getElementById('lightbox-close').addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+
+  /* ── Event Listeners ── */
+  document.getElementById('sidebar-close').addEventListener('click', closeSidebar);
+  document.getElementById('add-btn').addEventListener('click', openAddForm);
+  document.getElementById('add-modal-close').addEventListener('click', closeForm);
+  document.getElementById('pick-map-btn').addEventListener('click', startPicking);
+  document.getElementById('picking-cancel').addEventListener('click', () => { stopPicking(); document.getElementById('add-modal').classList.add('visible'); document.getElementById('modal-overlay').classList.add('visible'); });
+  document.getElementById('modal-overlay').addEventListener('click', () => {
+    closeForm();
+    closeAdminModal();
+  });
+
+  document.getElementById('admin-btn').addEventListener('click', () => {
+    if (isAdmin) { sessionStorage.removeItem('paula_admin'); setAdminState(false); showToast('Abgemeldet', 'info'); }
+    else { openAdminModal(); }
+  });
+  document.getElementById('admin-modal-close').addEventListener('click', closeAdminModal);
+  document.getElementById('admin-login-btn').addEventListener('click', tryAdminLogin);
+  document.getElementById('admin-pw').addEventListener('keydown', e => { if (e.key === 'Enter') tryAdminLogin(); });
+
+  document.getElementById('btn-edit-loc').addEventListener('click', () => {
+    if (currentSidebarLoc) openEditForm(currentSidebarLoc);
+  });
+  document.getElementById('btn-delete-loc').addEventListener('click', () => {
+    document.getElementById('sidebar-admin-actions').style.display  = 'none';
+    document.getElementById('sidebar-confirm-delete').style.display = 'flex';
+  });
+  document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+    if (currentSidebarLoc) doDelete(currentSidebarLoc);
+  });
+  document.getElementById('btn-confirm-no').addEventListener('click', () => {
+    document.getElementById('sidebar-admin-actions').style.display  = 'flex';
+    document.getElementById('sidebar-confirm-delete').style.display = 'none';
+  });
+
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (lightbox.classList.contains('visible'))                           { closeLightbox();      return; }
+    if (isPicking)                                                        { stopPicking(); document.getElementById('add-modal').classList.add('visible'); document.getElementById('modal-overlay').classList.add('visible'); return; }
+    if (document.getElementById('add-modal').classList.contains('visible'))  { closeForm();         return; }
+    if (document.getElementById('admin-modal').classList.contains('visible')){ closeAdminModal();   return; }
+    closeSidebar();
+  });
+
+  /* ── Init ── */
+  async function init() {
+    await loadData();
+    markerInstances = LOCS.map(loc => createMarkerFor(loc));
+    buildLegend();
+    updateCount();
+    checkAdminSession();
+  }
+
+  init();
+  </script>
+</body>
+</html>
