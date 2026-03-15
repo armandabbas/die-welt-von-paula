@@ -808,7 +808,14 @@
     clearTimeout(loveTitleTimer);
     if (loveTitleClicks >= 3) {
       loveTitleClicks = 0;
-      if (!isLoveUnlocked) openLoveModal();
+      if (!isLoveUnlocked) {
+        openLoveModal();
+      } else {
+        sessionStorage.removeItem('paula_love');
+        setLoveState(false);
+        closeSidebar();
+        showToast('Liebes-Bereich gesperrt', 'info');
+      }
     } else {
       loveTitleTimer = setTimeout(() => { loveTitleClicks = 0; }, 900);
     }
