@@ -477,6 +477,101 @@
     #sidebar::-webkit-scrollbar, #add-modal::-webkit-scrollbar { width: 3px; }
     #sidebar::-webkit-scrollbar-track, #add-modal::-webkit-scrollbar-track { background: transparent; }
     #sidebar::-webkit-scrollbar-thumb, #add-modal::-webkit-scrollbar-thumb { background: rgba(210,204,196,0.5); border-radius: 2px; }
+
+    /* ── Story Mode ── */
+    #story-btn {
+      background: rgba(252,250,248,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 0.5px solid rgba(210,204,196,0.7); color: #5a5450;
+      height: 32px; padding: 0 14px; border-radius: 1px; cursor: pointer;
+      font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 400; letter-spacing: 0.07em;
+      display: flex; align-items: center; gap: 7px; transition: all 0.15s;
+    }
+    #story-btn:hover { background: rgba(255,255,255,0.95); color: #1a1714; }
+
+    #story-panel {
+      position: fixed; top: 60px; right: 0;
+      width: 420px; height: calc(100dvh - 60px);
+      background: rgba(252,250,248,0.97); backdrop-filter: blur(32px); -webkit-backdrop-filter: blur(32px);
+      border-left: 0.5px solid rgba(210,204,196,0.45);
+      z-index: 850; overflow: hidden;
+      transform: translateX(100%);
+      transition: transform 0.52s cubic-bezier(0.4,0,0.2,1);
+    }
+    #story-panel.open { transform: translateX(0); }
+
+    #story-progress {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: rgba(210,204,196,0.25); z-index: 10;
+    }
+    #story-progress-fill { height: 100%; width: 0%; background: #1a1714; transition: width 0.45s ease; }
+
+    #story-close {
+      position: absolute; top: 18px; right: 18px;
+      background: rgba(255,255,255,0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: 0.5px solid rgba(210,204,196,0.6); width: 28px; height: 28px; border-radius: 50%;
+      color: #9c9590; font-size: 16px; cursor: pointer; z-index: 20;
+      display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+    }
+    #story-close:hover { color: #1a1714; background: white; }
+
+    #story-scroll {
+      height: 100%; overflow-y: scroll; overflow-x: hidden;
+      scroll-snap-type: y mandatory;
+    }
+    #story-scroll::-webkit-scrollbar { width: 2px; }
+    #story-scroll::-webkit-scrollbar-thumb { background: rgba(210,204,196,0.5); }
+
+    .story-card {
+      min-height: calc(100dvh - 60px);
+      padding: 64px 44px 56px;
+      display: flex; flex-direction: column; justify-content: center;
+      border-bottom: 0.5px solid rgba(210,204,196,0.25);
+      scroll-snap-align: start;
+      opacity: 0.28; transition: opacity 0.55s ease;
+    }
+    .story-card.active { opacity: 1; }
+
+    .sc-index {
+      font-family: 'Inter', sans-serif; font-size: 9px; color: #c8c2bb; letter-spacing: 0.1em; margin-bottom: 22px;
+    }
+    .sc-cat {
+      display: flex; align-items: center; gap: 7px; margin-bottom: 12px;
+      font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase;
+    }
+    .sc-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .sc-name {
+      font-family: 'Cormorant Garamond', serif; font-size: 40px; font-weight: 600;
+      color: #1a1714; line-height: 1.08; margin-bottom: 8px;
+    }
+    .sc-date {
+      font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 300;
+      color: #a09890; letter-spacing: 0.06em; margin-bottom: 22px;
+    }
+    .sc-rule { height: 0.5px; background: rgba(210,204,196,0.45); margin-bottom: 22px; }
+    .sc-story {
+      font-family: 'Cormorant Garamond', serif; font-size: 17px; font-style: italic;
+      color: #2e2b28; line-height: 1.8; margin-bottom: 26px;
+    }
+    .sc-photo { width: 100%; display: block; border-radius: 2px; border: 0.5px solid rgba(210,204,196,0.45); margin-bottom: 26px; }
+    .sc-from-label {
+      font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase; color: #b8b2ab; margin-bottom: 4px;
+    }
+    .sc-from-name { font-family: 'Cormorant Garamond', serif; font-size: 19px; font-weight: 500; color: #1a1714; }
+
+    @media (max-width: 500px) {
+      #story-btn { height: 36px; }
+      #story-panel {
+        top: auto; bottom: 0; left: 0; width: 100vw; height: 68dvh;
+        border-left: none; border-top: 0.5px solid rgba(210,204,196,0.5);
+        border-radius: 16px 16px 0 0;
+        transform: translateY(100%);
+      }
+      #story-panel.open { transform: translateY(0); }
+      .story-card { min-height: 68dvh; padding: 44px 28px 40px; }
+      .sc-name { font-size: 30px; }
+      .sc-story { font-size: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -524,9 +619,22 @@
     </div>
   </div>
 
+  <!-- Story Panel -->
+  <div id="story-panel">
+    <div id="story-progress"><div id="story-progress-fill"></div></div>
+    <button id="story-close">&times;</button>
+    <div id="story-scroll"></div>
+  </div>
+
   <!-- Bottom left: location count + admin button -->
   <div id="bottom-left">
     <button id="badge-count"></button>
+    <button id="story-btn">
+      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round">
+        <path d="M1 2h4v9H1z"/><path d="M7 2h4v9H7z"/>
+      </svg>
+      Story
+    </button>
     <button id="admin-btn" title="Admin">
       <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
         <rect x="1" y="5" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/>
@@ -1513,11 +1621,97 @@
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (lightbox.classList.contains('visible'))                           { closeLightbox();      return; }
+    if (document.getElementById('story-panel').classList.contains('open')){ exitStoryMode();      return; }
     if (isPicking)                                                        { stopPicking(); document.getElementById('add-modal').classList.add('visible'); document.getElementById('modal-overlay').classList.add('visible'); return; }
     if (document.getElementById('add-modal').classList.contains('visible'))  { closeForm();         return; }
     if (document.getElementById('admin-modal').classList.contains('visible')){ closeAdminModal();   return; }
     closeSidebar();
   });
+
+  /* ── Story Mode ── */
+  let storyObserver = null;
+
+  function buildStoryCards() {
+    const scroll = document.getElementById('story-scroll');
+    scroll.innerHTML = '';
+    const locs = LOCS.filter(l => isLocVisible(l));
+    locs.forEach((loc, i) => {
+      const color = COLORS[loc.category] || '#888';
+      const card  = document.createElement('div');
+      card.className   = 'story-card';
+      card.dataset.idx = i;
+      card.innerHTML   = `
+        <div class="sc-index">${String(i+1).padStart(2,'0')} &nbsp;/&nbsp; ${locs.length}</div>
+        <div class="sc-cat"><span class="sc-dot" style="background:${color}"></span><span style="color:${color}">${loc.category}</span></div>
+        <div class="sc-name">${loc.name}</div>
+        <div class="sc-date">${loc.date || ''}</div>
+        <div class="sc-rule"></div>
+        <div class="sc-story">${loc.story || ''}</div>
+        ${loc.photo ? `<img class="sc-photo" src="${loc.photo}" alt="${loc.name}" />` : ''}
+        <div class="sc-from-label">Erinnerung von</div>
+        <div class="sc-from-name">${loc.from || '—'}</div>
+      `;
+      scroll.appendChild(card);
+    });
+    return locs;
+  }
+
+  function enterStoryMode() {
+    closeSidebar();
+    const locs  = buildStoryCards();
+    const total = locs.length;
+    if (!total) { showToast('Noch keine Erinnerungen vorhanden', 'info'); return; }
+
+    document.getElementById('story-panel').classList.add('open');
+    document.getElementById('shuffle-btn').style.cssText = 'opacity:0;pointer-events:none';
+
+    const cards  = document.querySelectorAll('.story-card');
+    const scroll = document.getElementById('story-scroll');
+
+    storyObserver = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (!entry.isIntersecting) return;
+        document.querySelectorAll('.story-card').forEach(c => c.classList.remove('active'));
+        entry.target.classList.add('active');
+        const idx = parseInt(entry.target.dataset.idx);
+        document.getElementById('story-progress-fill').style.width = ((idx + 1) / total * 100) + '%';
+        const loc = locs[idx];
+        if (loc) {
+          const isMobile = window.innerWidth <= 500;
+          const offset   = isMobile ? [0, 0] : [-210, 0];
+          const center   = L.latLng(loc.lat, loc.lng);
+          const pt       = map.project(center, 7);
+          const shifted  = map.unproject([pt.x + offset[0], pt.y + offset[1]], 7);
+          map.flyTo(shifted, 7, { duration: 1.5, easeLinearity: 0.38 });
+        }
+      });
+    }, { root: scroll, threshold: 0.55 });
+
+    cards.forEach(c => storyObserver.observe(c));
+    // Trigger first card immediately
+    if (cards[0]) {
+      cards[0].classList.add('active');
+      const loc = locs[0];
+      if (loc) {
+        const isMobile = window.innerWidth <= 500;
+        const offset   = isMobile ? [0, 0] : [-210, 0];
+        const center   = L.latLng(loc.lat, loc.lng);
+        const pt       = map.project(center, 7);
+        const shifted  = map.unproject([pt.x + offset[0], pt.y + offset[1]], 7);
+        map.flyTo(shifted, 7, { duration: 1.8, easeLinearity: 0.38 });
+      }
+      document.getElementById('story-progress-fill').style.width = (1 / total * 100) + '%';
+    }
+  }
+
+  function exitStoryMode() {
+    document.getElementById('story-panel').classList.remove('open');
+    document.getElementById('shuffle-btn').style.cssText = '';
+    if (storyObserver) { storyObserver.disconnect(); storyObserver = null; }
+  }
+
+  document.getElementById('story-btn').addEventListener('click', enterStoryMode);
+  document.getElementById('story-close').addEventListener('click', exitStoryMode);
 
   /* ── Init ── */
   async function init() {
