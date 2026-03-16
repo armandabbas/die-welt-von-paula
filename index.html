@@ -2586,8 +2586,10 @@
         e.stopPropagation();
         document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
         div.classList.add('active');
+        const targetLng = loc._dlng ?? loc.lng;
+        const targetLat = loc._dlat ?? loc.lat;
         openSidebar(loc);
-        map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, duration: 1200 });
+        map.flyTo({ center: [targetLng, targetLat], zoom: 13, duration: 1200 });
       });
       const m = new mapboxgl.Marker({ element: div, anchor: 'center', pitchAlignment: 'map' })
         .setLngLat([loc._dlng ?? loc.lng, loc._dlat ?? loc.lat])
