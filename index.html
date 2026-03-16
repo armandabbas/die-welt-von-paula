@@ -786,14 +786,20 @@
     });
   }
 
+  function dataUrlToBlob(dataUrl) {
+    const [header, b64] = dataUrl.split(',');
+    const mime = header.match(/:(.*?);/)[1];
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    return new Blob([bytes], { type: mime });
+  }
+
   async function uploadToCloudinary(dataUrl) {
-    const blob = await (await fetch(dataUrl)).blob();
-    const fd   = new FormData();
-    fd.append('file', blob);
+    const fd = new FormData();
+    fd.append('file', dataUrlToBlob(dataUrl));
     fd.append('upload_preset', CONFIG.CLOUDINARY_PRESET);
     const r = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
-    if (!r.ok) throw new Error('Cloudinary Upload fehlgeschlagen');
     const j = await r.json();
+    if (!r.ok) throw new Error(j.error?.message || 'Cloudinary Upload fehlgeschlagen');
     return { url: j.secure_url, publicId: j.public_id };
   }
 
@@ -1377,7 +1383,9 @@
         const up = await uploadToCloudinary(photoDataUrl);
         photoUrl = up.url; photoId = up.publicId;
       } catch (e) {
-        showToast('Foto-Upload fehlgeschlagen — wird lokal gespeichert', 'error');
+        showToast('Foto-Upload: ' + e.message, 'error');
+        btn.textContent = 'Speichern'; btn.disabled = false;
+        return;
       }
       btn.textContent = 'Wird gespeichert…';
     } else if (!photoDataUrl && editingLoc?.photoId) {
@@ -1399,6 +1407,7 @@
       closeForm();
       openSidebar(ref);
       const saved = await saveData();
+      btn.textContent = 'Speichern'; btn.disabled = false;
       showToast(saved ? 'Änderungen gespeichert ✓' : 'Fehler beim Speichern', saved ? 'success' : 'error');
     } else {
       // Add mode
@@ -1410,6 +1419,7 @@
       openSidebar(data);
       map.panTo([data.lat, data.lng]);
       const saved = await saveData();
+      btn.textContent = 'Speichern'; btn.disabled = false;
       showToast(saved ? 'Ort gespeichert ✓' : 'Lokal sichtbar, nicht dauerhaft gespeichert', saved ? 'success' : 'error');
     }
   });
