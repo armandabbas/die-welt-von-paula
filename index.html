@@ -804,7 +804,7 @@
 
   /* ── Admin Auth ── */
   function checkAdminSession() {
-    if (sessionStorage.getItem('paula_admin') === 'yes') setAdminState(true);
+    if (localStorage.getItem('paula_admin') === 'yes') setAdminState(true);
   }
 
   function setAdminState(active) {
@@ -821,7 +821,7 @@
     if (!pw) return;
     const hash = await sha256(pw);
     if (hash === CONFIG.ADMIN_HASH) {
-      sessionStorage.setItem('paula_admin', 'yes');
+      localStorage.setItem('paula_admin', 'yes');
       setAdminState(true);
       closeAdminModal();
       showToast('Als Admin angemeldet', 'success');
@@ -899,7 +899,14 @@
     if (loveTitleClicks >= 3) {
       loveTitleClicks = 0;
       if (!isLoveUnlocked) {
-        openLoveModal();
+        // Admin skips password — unlocks directly
+        if (isAdmin) {
+          sessionStorage.setItem('paula_love', 'yes');
+          setLoveState(true);
+          showToast('Liebes-Bereich geöffnet ♡', 'success');
+        } else {
+          openLoveModal();
+        }
       } else {
         sessionStorage.removeItem('paula_love');
         setLoveState(false);
@@ -1261,7 +1268,7 @@
   });
 
   document.getElementById('admin-btn').addEventListener('click', () => {
-    if (isAdmin) { sessionStorage.removeItem('paula_admin'); setAdminState(false); showToast('Abgemeldet', 'info'); }
+    if (isAdmin) { localStorage.removeItem('paula_admin'); setAdminState(false); showToast('Abgemeldet', 'info'); }
     else { openAdminModal(); }
   });
   document.getElementById('admin-modal-close').addEventListener('click', closeAdminModal);
