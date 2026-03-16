@@ -1411,6 +1411,27 @@
         display: none;
       }
 
+      /* Shuffle: small square next to story */
+      #shuffle-btn {
+        position: relative !important;
+        bottom: auto !important;
+        left: auto !important;
+        transform: none !important;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 4px;
+      }
+
+      #shuffle-btn span {
+        display: none;
+      }
+
+      #shuffle-btn svg {
+        margin: 0;
+      }
+
       /* Sidebar: bottom sheet instead of right panel */
       #sidebar {
         top: auto;
@@ -1930,6 +1951,16 @@
       </svg>
       Story
     </button>
+    <button id="shuffle-btn">
+      <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1"
+        stroke-linecap="round" stroke-linejoin="round">
+        <path d="M1 4h8.5a2.5 2.5 0 0 1 2.5 2.5v0" />
+        <path d="M1 10h8.5a2.5 2.5 0 0 0 2.5-2.5v0" />
+        <polyline points="10,2 13,4 10,6" />
+        <polyline points="10,8 13,10 10,12" />
+      </svg>
+      <span>Überrasch mich</span>
+    </button>
     <button id="admin-btn" title="Admin">
       <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
         <rect x="1" y="5" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1" />
@@ -1940,16 +1971,6 @@
   </div>
 
   <button id="add-btn" title="Neuen Ort hinzufügen">+</button>
-  <button id="shuffle-btn">
-    <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.1"
-      stroke-linecap="round" stroke-linejoin="round">
-      <path d="M1 4h8.5a2.5 2.5 0 0 1 2.5 2.5v0" />
-      <path d="M1 10h8.5a2.5 2.5 0 0 0 2.5-2.5v0" />
-      <polyline points="10,2 13,4 10,6" />
-      <polyline points="10,8 13,10 10,12" />
-    </svg>
-    Überrasch mich
-  </button>
 
   <div id="picking-pill">
     <span class="picking-dot"></span>
