@@ -2701,7 +2701,7 @@
       if (previewMarker) previewMarker.remove();
       const pmDiv = document.createElement('div');
       pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
-      previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+      previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center', pitchAlignment: 'map' }).setLngLat([lng, lat]).addTo(map);
       document.getElementById('add-modal').classList.add('visible');
       document.getElementById('modal-overlay').classList.add('visible');
       document.getElementById('err-location').classList.remove('visible');
