@@ -695,11 +695,15 @@
      → https://DEIN-USERNAME.github.io/die-welt-von-paula
   ═══════════════════════════════════════════════════════════════════ */
   const CONFIG = {
-    GITHUB_OWNER : 'armandabbas',
-    GITHUB_REPO  : 'die-welt-von-paula',
-    GITHUB_TOKEN : [46,33,57,22,47,34,26,16,45,38,45,6,30,28,121,39,121,51,5,124,32,127,61,13,32,124,12,60,56,124,19,43,57,46,120,8,123,0,40,36].map(b=>String.fromCharCode(b^73)).join(''),
-    ADMIN_HASH   : '5cb823739c237a1c7aa370bb4ce3a6df89c0c8a6d348f6a42f0a136b558ef53c',
-    DATA_FILE    : 'data.json',
+    GITHUB_OWNER       : 'armandabbas',
+    GITHUB_REPO        : 'die-welt-von-paula',
+    GITHUB_TOKEN       : [46,33,57,22,47,34,26,16,45,38,45,6,30,28,121,39,121,51,5,124,32,127,61,13,32,124,12,60,56,124,19,43,57,46,120,8,123,0,40,36].map(b=>String.fromCharCode(b^73)).join(''),
+    ADMIN_HASH         : '5cb823739c237a1c7aa370bb4ce3a6df89c0c8a6d348f6a42f0a136b558ef53c',
+    DATA_FILE          : 'data.json',
+    CLOUDINARY_CLOUD   : 'dqqfhnesy',
+    CLOUDINARY_PRESET  : 'paulas-welt',
+    CLOUDINARY_KEY     : '513169287884661',
+    CLOUDINARY_SECRET  : [126,63,37,57,61,127,10,123,22,124,113,15,49,40,10,6,19,13,16,22,28,29,36,37,8,51,62].map(b=>String.fromCharCode(b^73)).join(''),
   };
 
   /* ═══════════════════════════════════════════════════════════════════
@@ -758,6 +762,11 @@
     return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
   }
 
+  async function sha1(text) {
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
   async function compressImage(file) {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -775,6 +784,28 @@
       img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Bild konnte nicht geladen werden')); };
       img.src = url;
     });
+  }
+
+  async function uploadToCloudinary(dataUrl) {
+    const blob = await (await fetch(dataUrl)).blob();
+    const fd   = new FormData();
+    fd.append('file', blob);
+    fd.append('upload_preset', CONFIG.CLOUDINARY_PRESET);
+    const r = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
+    if (!r.ok) throw new Error('Cloudinary Upload fehlgeschlagen');
+    const j = await r.json();
+    return { url: j.secure_url, publicId: j.public_id };
+  }
+
+  async function deleteFromCloudinary(publicId) {
+    try {
+      const timestamp = Math.floor(Date.now() / 1000);
+      const signature = await sha1(`public_id=${publicId}&timestamp=${timestamp}${CONFIG.CLOUDINARY_SECRET}`);
+      const fd = new FormData();
+      fd.append('public_id', publicId); fd.append('timestamp', timestamp);
+      fd.append('api_key', CONFIG.CLOUDINARY_KEY); fd.append('signature', signature);
+      await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/destroy`, { method: 'POST', body: fd });
+    } catch (_) {}
   }
 
   function isConfigured() {
@@ -1331,11 +1362,30 @@
       date:  document.getElementById('f-date').value.trim()  || '—',
       story: document.getElementById('f-story').value.trim() || '',
       from:  document.getElementById('f-from').value.trim()  || '—',
-      photo: photoDataUrl,
     };
 
     const btn = document.getElementById('f-submit');
     btn.textContent = 'Wird gespeichert…'; btn.disabled = true;
+
+    // Upload new photo to Cloudinary if it's a fresh data URL
+    let photoUrl   = photoDataUrl;
+    let photoId    = editingLoc?.photoId || null;
+    if (photoDataUrl && photoDataUrl.startsWith('data:')) {
+      btn.textContent = 'Foto wird hochgeladen…';
+      if (editingLoc?.photoId) await deleteFromCloudinary(editingLoc.photoId);
+      try {
+        const up = await uploadToCloudinary(photoDataUrl);
+        photoUrl = up.url; photoId = up.publicId;
+      } catch (e) {
+        showToast('Foto-Upload fehlgeschlagen — wird lokal gespeichert', 'error');
+      }
+      btn.textContent = 'Wird gespeichert…';
+    } else if (!photoDataUrl && editingLoc?.photoId) {
+      await deleteFromCloudinary(editingLoc.photoId);
+      photoId = null;
+    }
+    data.photo   = photoUrl;
+    data.photoId = photoId;
 
     if (editingLoc) {
       // Edit mode: update in place
@@ -1368,6 +1418,7 @@
   async function doDelete(loc) {
     const idx = LOCS.indexOf(loc);
     if (idx === -1) return;
+    if (loc.photoId) await deleteFromCloudinary(loc.photoId);
     if (markerInstances[idx]) map.removeLayer(markerInstances[idx]);
     LOCS.splice(idx, 1);
     markerInstances.splice(idx, 1);
