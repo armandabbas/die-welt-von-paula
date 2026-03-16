@@ -486,48 +486,7 @@
     #sidebar::-webkit-scrollbar-track, #add-modal::-webkit-scrollbar-track { background: transparent; }
     #sidebar::-webkit-scrollbar-thumb, #add-modal::-webkit-scrollbar-thumb { background: rgba(210,204,196,0.5); border-radius: 2px; }
 
-    /* ── Night Mode ── */
-    body, #topbar, #sidebar, #story-panel, #badge-count, #story-btn, #admin-btn,
-    #shuffle-btn, #add-btn, #sidebar-close, #story-close {
-      transition: background 2.5s ease, border-color 2.5s ease, color 2s ease;
-    }
-    #topbar-title, #topbar-subtitle, .legend-item, #sidebar-name, #sidebar-story,
-    #sidebar-date, #sidebar-category, #sidebar-from-name, #sidebar-from-label,
-    .sc-name, .sc-story, .sc-date, .sc-index, .sc-from-name, .sc-from-label { transition: color 2s ease; }
-    #sidebar-divider, .sc-rule { transition: background 2.5s ease; }
-
-    body.night-mode { background: #0c0b09; }
-    body.night-mode #topbar {
-      background: rgba(13,11,9,0.90); border-bottom-color: rgba(255,255,255,0.06);
-    }
-    body.night-mode #topbar-title    { color: rgba(234,226,214,0.95); }
-    body.night-mode #topbar-subtitle { color: rgba(90,86,80,0.85); }
-    body.night-mode .legend-item     { color: rgba(100,95,88,0.85); }
-    body.night-mode #sidebar {
-      background: rgba(13,11,9,0.96); border-left-color: rgba(255,255,255,0.06);
-    }
-    body.night-mode #sidebar-name    { color: rgba(234,226,214,0.95); }
-    body.night-mode #sidebar-date    { color: rgba(90,86,80,0.85); }
-    body.night-mode #sidebar-story   { color: rgba(188,180,168,0.9); }
-    body.night-mode #sidebar-from-name { color: rgba(234,226,214,0.95); }
-    body.night-mode #sidebar-from-label { color: rgba(72,68,64,0.8); }
-    body.night-mode #sidebar-divider { background: rgba(255,255,255,0.07); }
-    body.night-mode #sidebar-close   { background: rgba(30,26,22,0.8); color: rgba(130,124,116,0.9); border-color: rgba(255,255,255,0.07); }
-    body.night-mode #story-panel     { background: rgba(10,9,7,0.98); border-left-color: rgba(255,255,255,0.05); }
-    body.night-mode #story-progress  { background: rgba(255,255,255,0.05); }
-    body.night-mode #story-progress-fill { background: rgba(234,226,214,0.7); }
-    body.night-mode #story-close     { background: rgba(26,22,18,0.85); color: rgba(120,114,106,0.9); border-color: rgba(255,255,255,0.07); }
-    body.night-mode .sc-name         { color: rgba(234,226,214,0.95); }
-    body.night-mode .sc-date         { color: rgba(90,86,80,0.85); }
-    body.night-mode .sc-story        { color: rgba(188,180,168,0.9); }
-    body.night-mode .sc-from-name    { color: rgba(234,226,214,0.95); }
-    body.night-mode .sc-from-label   { color: rgba(72,68,64,0.8); }
-    body.night-mode .sc-index        { color: rgba(65,60,55,0.8); }
-    body.night-mode .sc-rule         { background: rgba(255,255,255,0.07); }
-    body.night-mode #badge-count, body.night-mode #story-btn,
-    body.night-mode #admin-btn       { background: rgba(20,17,14,0.88); border-color: rgba(255,255,255,0.08); color: rgba(140,132,122,0.9); }
-    body.night-mode #shuffle-btn     { background: rgba(20,17,14,0.82); border-color: rgba(255,255,255,0.08); color: rgba(140,132,122,0.9); }
-    body.night-mode #add-btn         { background: rgba(234,226,214,0.11); border-color: rgba(255,255,255,0.1); color: rgba(234,226,214,0.8); }
+    /* ── Night Mode — nur Karte & Marker, UI bleibt hell ── */
 
     /* ── Story Mode ── */
     #story-btn {
@@ -1101,11 +1060,15 @@
       item.addEventListener('click', () => {
         listView.classList.remove('active');
         innerView.classList.remove('hidden');
-        openSidebar(loc);
         const idx = LOCS.indexOf(loc);
-        if (idx !== -1 && markerInstances[idx]) {
-          markerInstances[idx].getElement()?.querySelector('.custom-marker')?.classList.add('active');
-        }
+        map.flyTo([loc.lat, loc.lng], 9, { duration: 1.2, easeLinearity: 0.4 });
+        setTimeout(() => {
+          openSidebar(loc);
+          if (idx !== -1 && markerInstances[idx]) {
+            document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
+            markerInstances[idx].getElement()?.querySelector('.custom-marker')?.classList.add('active');
+          }
+        }, 1250);
       });
       container.appendChild(item);
     });
