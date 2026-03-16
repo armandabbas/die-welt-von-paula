@@ -1566,9 +1566,9 @@
     }
 
     /* ── Controls ── */
-    .mapboxgl-ctrl-top-right {
+    .mapboxgl-ctrl-top-left {
       top: 76px !important;
-      right: 16px !important;
+      left: 16px !important;
     }
 
     .mapboxgl-ctrl-group {
@@ -2231,7 +2231,7 @@
       pitch: 0,
       bearing: 0
     });
-    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-right');
+    map.addControl(new mapboxgl.NavigationControl({ visualizePitch: true }), 'top-left');
 
     map.on('style.load', () => {
       if (!map.getLayer('3d-buildings')) {
