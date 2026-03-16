@@ -168,19 +168,7 @@
       "id": "mmt7un4g0l0z",
       "_dlat": 48.1371079,
       "_dlng": 11.5753822
-    },
-    {
-      "name": "Istha",
-      "lat": 51.316880504045876,
-      "lng": 9.228515625000002,
-      "category": "Kindheit",
-      "date": "sommer 2022",
-      "story": "asdf",
-      "from": "asdf",
-      "photo": "https://res.cloudinary.com/dqqfhnesy/image/upload/v1773667906/escjg308cog0oea5enam.jpg",
-      "photoId": "escjg308cog0oea5enam",
-      "id": "mmt82rv7vgqk"
     }
   ],
-  "updatedAt": "2026-03-16T13:31:47.637Z"
+  "updatedAt": "2026-03-16T13:33:00.048Z"
 }
