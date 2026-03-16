@@ -107,7 +107,7 @@
     #badge-count {
       background: rgba(252,250,248,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
       border: 0.5px solid rgba(255,255,255,0.6); padding: 7px 13px;
-      font-family: 'Inter', sans-serif; font-size: 10px; color: #7a7470; letter-spacing: 0.05em; pointer-events: none;
+      font-family: 'Inter', sans-serif; font-size: 10px; color: #7a7470; letter-spacing: 0.05em;
     }
     #admin-btn {
       background: rgba(252,250,248,0.78); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -332,6 +332,32 @@
     }
     #lightbox-close:hover { background: rgba(255,255,255,0.16); color: #fff; }
 
+    /* ── Legend Filter ── */
+    .legend-item { cursor: pointer; transition: opacity 0.18s; }
+    .legend-item.dimmed { opacity: 0.28; }
+    .legend-item.selected .legend-dot { box-shadow: 0 0 0 2px currentColor; }
+
+    /* ── Badge as button ── */
+    #badge-count { cursor: pointer; transition: background 0.15s; }
+    #badge-count:hover { background: rgba(255,255,255,0.92); }
+
+    /* ── Sidebar List View ── */
+    #sidebar-list-view { display: none; padding: 24px 26px 44px; }
+    #sidebar-list-view.active { display: block; }
+    #sidebar-inner.hidden { display: none; }
+    #sidebar-list-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 600; color: #1a1714; margin-bottom: 18px; line-height: 1.2; }
+    .loc-list-item {
+      display: flex; align-items: center; gap: 11px; padding: 11px 0;
+      border-bottom: 0.5px solid rgba(210,204,196,0.4); cursor: pointer; transition: opacity 0.15s;
+    }
+    .loc-list-item:last-child { border-bottom: none; }
+    .loc-list-item:hover { opacity: 0.72; }
+    .loc-list-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; border: 1.5px solid rgba(255,255,255,0.85); box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .loc-list-info { flex: 1; min-width: 0; }
+    .loc-list-name { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-weight: 600; color: #1a1714; line-height: 1.2; }
+    .loc-list-meta { font-family: 'Inter', sans-serif; font-size: 9px; color: #a09890; letter-spacing: 0.06em; text-transform: uppercase; margin-top: 2px; }
+    .loc-list-arrow { color: #c8c3be; font-size: 13px; flex-shrink: 0; }
+
     /* ── Mobile / iPhone Global Fixes ── */
     :root {
       --safe-top: env(safe-area-inset-top, 0px);
@@ -371,6 +397,7 @@
       }
       #sidebar.open { transform: translateY(0); }
       #sidebar-inner { padding: 24px 22px calc(32px + var(--safe-bottom)); }
+      #sidebar-list-view { padding: 24px 22px calc(44px + var(--safe-bottom)); }
       #sidebar-close { top: 14px; right: 14px; width: 30px; height: 30px; font-size: 17px; }
 
       /* Modals: near full-width */
@@ -447,6 +474,10 @@
   <!-- Sidebar -->
   <div id="sidebar">
     <button id="sidebar-close">&times;</button>
+    <div id="sidebar-list-view">
+      <div id="sidebar-list-title"></div>
+      <div id="sidebar-list-items"></div>
+    </div>
     <div id="sidebar-inner">
       <div id="sidebar-category"></div>
       <div id="sidebar-name"></div>
@@ -475,7 +506,7 @@
 
   <!-- Bottom left: location count + admin button -->
   <div id="bottom-left">
-    <div id="badge-count"></div>
+    <button id="badge-count"></button>
     <button id="admin-btn" title="Admin">
       <svg width="11" height="12" viewBox="0 0 11 12" fill="none">
         <rect x="1" y="5" width="9" height="7" rx="1" stroke="currentColor" stroke-width="1"/>
@@ -678,6 +709,7 @@
   let isLoveUnlocked   = false;
   let loveTitleClicks  = 0;
   let loveTitleTimer   = null;
+  let activeFilter     = null;
 
   /* ── Utils ── */
   function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
@@ -779,10 +811,52 @@
     legendEl.innerHTML = '';
     used.forEach(cat => {
       const el = document.createElement('div');
-      el.className = 'legend-item';
-      el.innerHTML = `<span class="legend-dot" style="background:${COLORS[cat]||'#888'}"></span><span>${cat}</span>`;
+      el.className = 'legend-item' + (activeFilter && activeFilter !== cat ? ' dimmed' : '') + (activeFilter === cat ? ' selected' : '');
+      el.innerHTML = `<span class="legend-dot" style="background:${COLORS[cat]||'#888'};color:${COLORS[cat]||'#888'}"></span><span>${cat}</span>`;
+      el.addEventListener('click', () => applyFilter(activeFilter === cat ? null : cat));
       legendEl.appendChild(el);
     });
+  }
+
+  function applyFilter(cat) {
+    activeFilter = cat;
+    buildLegend();
+    rebuildAllMarkers();
+    closeSidebar();
+  }
+
+  /* ── Sidebar List View ── */
+  function openSidebarList(locs, title) {
+    closeSidebar();
+    const listView  = document.getElementById('sidebar-list-view');
+    const innerView = document.getElementById('sidebar-inner');
+    document.getElementById('sidebar-list-title').textContent = title;
+    const container = document.getElementById('sidebar-list-items');
+    container.innerHTML = '';
+    locs.forEach(loc => {
+      const item = document.createElement('div');
+      item.className = 'loc-list-item';
+      item.innerHTML = `
+        <span class="loc-list-dot" style="background:${COLORS[loc.category]||'#888'}"></span>
+        <span class="loc-list-info">
+          <div class="loc-list-name">${loc.name || '—'}</div>
+          <div class="loc-list-meta">${loc.category || ''}${loc.from && loc.from !== '—' ? ' · ' + loc.from : ''}</div>
+        </span>
+        <span class="loc-list-arrow">›</span>`;
+      item.addEventListener('click', () => {
+        listView.classList.remove('active');
+        innerView.classList.remove('hidden');
+        openSidebar(loc);
+        const idx = LOCS.indexOf(loc);
+        if (idx !== -1 && markerInstances[idx]) {
+          markerInstances[idx].getElement()?.querySelector('.custom-marker')?.classList.add('active');
+        }
+      });
+      container.appendChild(item);
+    });
+    innerView.classList.add('hidden');
+    listView.classList.add('active');
+    document.getElementById('sidebar').classList.add('open');
   }
 
   /* ── Category Select ── */
@@ -963,17 +1037,49 @@
     sidebar.classList.remove('open');
     currentSidebarLoc = null;
     document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
+    document.getElementById('sidebar-list-view').classList.remove('active');
+    document.getElementById('sidebar-inner').classList.remove('hidden');
   }
 
   /* ── Markers ── */
+  function isLocVisible(loc) {
+    if (isLoveUnlocked ? loc.category !== 'Liebe' : loc.category === 'Liebe') return false;
+    if (activeFilter && loc.category !== activeFilter) return false;
+    return true;
+  }
+
+  // Spread overlapping markers in a small circle so each is individually tappable
+  function computeDisplayCoords() {
+    const THRESHOLD = 0.0001;
+    const SPREAD    = 0.0004;
+    const seen      = new Set();
+    LOCS.forEach(loc => {
+      if (seen.has(loc.id)) return;
+      const group = LOCS.filter(l =>
+        isLocVisible(l) &&
+        Math.abs(l.lat - loc.lat) < THRESHOLD &&
+        Math.abs(l.lng - loc.lng) < THRESHOLD
+      );
+      group.forEach(l => seen.add(l.id));
+      if (group.length <= 1) {
+        group.forEach(l => { l._dlat = l.lat; l._dlng = l.lng; });
+      } else {
+        group.forEach((l, i) => {
+          const angle = (2 * Math.PI * i) / group.length - Math.PI / 2;
+          l._dlat = loc.lat + SPREAD * Math.cos(angle);
+          l._dlng = loc.lng + SPREAD * Math.sin(angle);
+        });
+      }
+    });
+  }
+
   function createMarkerFor(loc) {
-    // In love mode: show only Liebe. In normal mode: show everything except Liebe.
-    if (isLoveUnlocked ? loc.category !== 'Liebe' : loc.category === 'Liebe') return null;
+    if (!isLocVisible(loc)) return null;
     const color = COLORS[loc.category] || '#888';
     const div   = document.createElement('div');
     div.className = 'custom-marker'; div.style.background = color;
     const icon = L.divIcon({ html: div.outerHTML, className: '', iconSize:[13,13], iconAnchor:[6,6] });
-    const m = L.marker([loc.lat, loc.lng], { icon }).addTo(map);
+    const m = L.marker([loc._dlat ?? loc.lat, loc._dlng ?? loc.lng], { icon }).addTo(map);
     m.on('click', e => {
       if (isPicking) return;
       L.DomEvent.stopPropagation(e);
@@ -986,6 +1092,7 @@
 
   function rebuildAllMarkers() {
     markerInstances.forEach(m => m && map.removeLayer(m));
+    computeDisplayCoords();
     markerInstances = LOCS.map(loc => createMarkerFor(loc));
   }
 
@@ -1265,6 +1372,12 @@
   document.getElementById('modal-overlay').addEventListener('click', () => {
     closeForm();
     closeAdminModal();
+  });
+
+  document.getElementById('badge-count').addEventListener('click', () => {
+    const visible = LOCS.filter(l => isLocVisible(l));
+    if (!visible.length) return;
+    openSidebarList(visible, visible.length + (visible.length === 1 ? ' Erinnerung' : ' Erinnerungen'));
   });
 
   document.getElementById('admin-btn').addEventListener('click', () => {
