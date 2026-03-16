@@ -127,6 +127,8 @@
       cursor: pointer;
       transition: transform 0.2s ease;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.1);
+      /* Prevent Mapbox transform issues */
+      will-change: transform;
     }
 
     .custom-marker:hover {
@@ -2583,7 +2585,7 @@
         div.classList.add('active');
         openSidebar(loc);
       });
-      const m = new mapboxgl.Marker({ element: div })
+      const m = new mapboxgl.Marker({ element: div, anchor: 'center' })
         .setLngLat([loc._dlng ?? loc.lng, loc._dlat ?? loc.lat])
         .addTo(map);
       return m;
@@ -2639,7 +2641,7 @@
       if (previewMarker) previewMarker.remove();
       const pmDiv = document.createElement('div');
       pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
-      previewMarker = new mapboxgl.Marker({ element: pmDiv }).setLngLat([loc.lng, loc.lat]).addTo(map);
+      previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center' }).setLngLat([loc.lng, loc.lat]).addTo(map);
 
       closeSidebar();
       document.getElementById('add-modal').classList.add('visible');
@@ -2700,7 +2702,7 @@
       if (previewMarker) previewMarker.remove();
       const pmDiv = document.createElement('div');
       pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
-      previewMarker = new mapboxgl.Marker({ element: pmDiv }).setLngLat([lng, lat]).addTo(map);
+      previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
       document.getElementById('add-modal').classList.add('visible');
       document.getElementById('modal-overlay').classList.add('visible');
       document.getElementById('err-location').classList.remove('visible');
@@ -2763,7 +2765,7 @@
           if (previewMarker) previewMarker.remove();
           const pmDiv = document.createElement('div');
           pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
-          previewMarker = new mapboxgl.Marker({ element: pmDiv }).setLngLat([lng, lat]).addTo(map);
+          previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
           map.panTo({ center: [lng, lat] });
         });
       });
