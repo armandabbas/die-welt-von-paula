@@ -2347,8 +2347,8 @@
           innerView.classList.remove('hidden');
           const idx = LOCS.indexOf(loc);
           map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, duration: 5000 });
+          openSidebar(loc);
           setTimeout(() => {
-            openSidebar(loc);
             if (idx !== -1 && markerInstances[idx]) {
               document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
               markerInstances[idx].getElement().classList.add('active');
@@ -2501,6 +2501,24 @@
     /* ── Sidebar ── */
     const sidebar = document.getElementById('sidebar');
 
+    let currentTypewriter = null;
+    function typeText(el, text, totalMs) {
+      if (currentTypewriter) clearInterval(currentTypewriter);
+      el.textContent = '';
+      if (!text) return;
+      const parts = text.split('');
+      let i = 0;
+      const pace = Math.min(60, totalMs / parts.length); // Cap at 60ms/char
+      currentTypewriter = setInterval(() => {
+        if (i < parts.length) {
+          el.textContent += parts[i++];
+        } else {
+          clearInterval(currentTypewriter);
+          currentTypewriter = null;
+        }
+      }, pace);
+    }
+
     function openSidebar(loc) {
       currentSidebarLoc = loc;
       const color = COLORS[loc.category] || '#888';
@@ -2508,8 +2526,10 @@
       document.getElementById('sidebar-category').style.color = color;
       document.getElementById('sidebar-name').textContent = loc.name || '';
       document.getElementById('sidebar-date').textContent = loc.date || '';
-      document.getElementById('sidebar-story').textContent = loc.story || '';
       document.getElementById('sidebar-from-name').textContent = loc.from || '';
+
+      const storyEl = document.getElementById('sidebar-story');
+      typeText(storyEl, loc.story || '', 5000);
 
       const wrap = document.getElementById('sidebar-photo-wrap');
       wrap.innerHTML = '';
@@ -2910,8 +2930,8 @@
       const loc = pool[Math.floor(Math.random() * pool.length)];
       const idx = LOCS.indexOf(loc);
       map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, duration: 5000 });
+      openSidebar(loc);
       setTimeout(() => {
-        openSidebar(loc);
         if (idx !== -1 && markerInstances[idx]) {
           document.querySelectorAll('.custom-marker.active').forEach(el => el.classList.remove('active'));
           markerInstances[idx].getElement().classList.add('active');
