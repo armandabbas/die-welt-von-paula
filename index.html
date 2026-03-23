@@ -1958,7 +1958,7 @@
       position: absolute;
       inset: 0;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.08;
+      opacity: 0.25;
       mix-blend-mode: multiply;
       pointer-events: none;
     }
@@ -2054,79 +2054,75 @@
       inset: 0;
       z-index: 50;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.5s ease;
+      transition: opacity 0.6s ease;
       background: transparent;
-      animation: subtleBreath 7s ease-in-out infinite;
+      pointer-events: none;
     }
 
     #greeting-ui.hidden {
       opacity: 0;
-      pointer-events: none;
     }
 
-    @keyframes textReveal {
+    .seal {
+      pointer-events: all;
+      width: 220px;
+      height: 220px;
+      background: #1a1714;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+      animation: sealFadeIn 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards, subtleBreath 8s ease-in-out infinite;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    @keyframes sealFadeIn {
       0% {
         opacity: 0;
-        filter: blur(12px);
-        transform: scale(0.9) translateY(10px);
+        transform: scale(0.8) translateZ(50px);
       }
 
       100% {
         opacity: 1;
-        filter: blur(0);
-        transform: scale(1) translateY(0);
+        transform: scale(1) translateZ(50px);
       }
     }
 
-    #greeting-ui>* {
-      opacity: 0;
-      animation: textReveal 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+    .seal:hover {
+      background: #000;
+      transform: scale(1.03) translateZ(50px);
     }
 
-    #greeting-ui> :nth-child(1) {
-      animation-delay: 0.2s !important;
-    }
-
-    #greeting-ui> :nth-child(2) {
-      animation-delay: 0.6s !important;
-    }
-
-    #greeting-ui> :nth-child(3) {
-      animation-delay: 1.0s !important;
-    }
-
-    #greeting-ui> :nth-child(4) {
-      animation-delay: 1.6s !important;
-    }
-
-    .greeting-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 34px;
-      font-weight: 600;
-      color: #1a1714;
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    #btn-entdecken {
-      background: none;
-      border: 1px solid rgba(26, 23, 20, 0.8);
-      color: #1a1714;
+    .seal-subtitle {
       font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      letter-spacing: 0.15em;
+      font-size: 10px;
+      color: rgba(251, 249, 246, 0.5);
       text-transform: uppercase;
-      padding: 12px 28px;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      letter-spacing: 0.2em;
+      margin-bottom: 8px;
     }
 
-    #btn-entdecken:hover {
-      background: #1a1714;
-      color: #fff;
+    .seal-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 32px;
+      font-weight: 400;
+      color: #fbf9f6;
+      line-height: 1.1;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    .seal-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      color: rgba(251, 249, 246, 0.9);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
     }
 
     /* Restore Mapbox controls affected by map inset: -100px */
@@ -2165,12 +2161,11 @@
     </div>
 
     <div id="greeting-ui">
-      <div class="greeting-subtitle" style="margin-bottom:0;">Willkommen</div>
-      <div class="greeting-title" style="margin-bottom:8px;">Paulas Welt</div>
-      <div class="greeting-text"
-        style="font-family:'Inter', sans-serif; font-size: 13px; color:#a09890; margin-bottom: 30px; letter-spacing:0.02em;">
-        Finde heraus, was dich erwartet.</div>
-      <button id="btn-entdecken">Entdecken</button>
+      <div class="seal" id="btn-entdecken">
+        <div class="seal-subtitle">Willkommen</div>
+        <div class="seal-title">Paulas<br>Welt</div>
+        <div class="seal-text">Entdecken</div>
+      </div>
     </div>
   </div>
 
