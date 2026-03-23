@@ -1896,7 +1896,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background-color: #fcfaf8;
+      background-color: transparent;
       transition: opacity 1.2s ease, visibility 1.2s;
       perspective: 1500px;
       pointer-events: all;
@@ -1923,7 +1923,9 @@
       top: 0;
       width: 20vw;
       height: 100vh;
-      background: #fcfaf8;
+      background: rgba(252, 250, 248, 0.95);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       transform-style: preserve-3d;
       box-shadow: inset -2px 0 10px rgba(0, 0, 0, 0.015), inset 2px 0 10px rgba(0, 0, 0, 0.015);
       border-right: 0.5px solid rgba(210, 204, 196, 0.3);
@@ -1986,6 +1988,55 @@
       transition-delay: 1.5s;
     }
 
+    /* Curtains */
+    .curtain {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 50vw;
+      background-color: #fcfaf8;
+      z-index: 5;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .curtain-left {
+      left: 0;
+      transform: translateX(-10vw);
+    }
+
+    .curtain-right {
+      right: 0;
+      transform: translateX(10vw);
+    }
+
+    .unfold-step-1~.curtain-right {
+      transform: translateX(30vw);
+    }
+
+    .unfold-step-2~.curtain-left {
+      transform: translateX(-30vw);
+    }
+
+    .unfold-step-3~.curtain-right {
+      transform: translateX(50vw);
+    }
+
+    .unfold-step-4~.curtain-left {
+      transform: translateX(-50vw);
+    }
+
+    @keyframes subtleBreath {
+
+      0%,
+      100% {
+        transform: scale(1) translateY(0);
+      }
+
+      50% {
+        transform: scale(1.02) translateY(-2px);
+      }
+    }
+
     /* UI Cover */
     #greeting-ui {
       position: absolute;
@@ -1996,8 +2047,8 @@
       align-items: center;
       justify-content: center;
       transition: opacity 0.5s ease;
-      /* Soft paper gradient cover to obscure folds */
       background: linear-gradient(135deg, rgba(252, 250, 248, 0.95), rgba(245, 242, 238, 0.95));
+      animation: subtleBreath 7s ease-in-out infinite;
     }
 
     #greeting-ui.hidden {
@@ -2052,6 +2103,8 @@
         </div>
       </div>
     </div>
+    <div class="curtain curtain-left"></div>
+    <div class="curtain curtain-right"></div>
 
     <div id="greeting-ui">
       <div class="greeting-title">Entdecke Paulas Welt</div>
@@ -3314,12 +3367,17 @@
           greetingUi.classList.add('hidden');
           setTimeout(() => {
             container.classList.add('unfold');
+            container.classList.add('unfold-step-1');
           }, 300);
+
+          setTimeout(() => container.classList.add('unfold-step-2'), 800);
+          setTimeout(() => container.classList.add('unfold-step-3'), 1300);
+          setTimeout(() => container.classList.add('unfold-step-4'), 1800);
 
           // Hide completely after unfold sequence
           setTimeout(() => {
             greeting.classList.add('hidden');
-          }, 2800);
+          }, 3200);
         });
       }
 
