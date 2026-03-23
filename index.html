@@ -23,14 +23,21 @@
       padding: 0;
     }
 
-    html,
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+    }
+
     body {
       margin: 0;
       padding: 0;
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #000;
+      background: #000;
     }
 
     body {
@@ -115,8 +122,10 @@
       left: 0;
       right: 0;
       bottom: 0;
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
+      height: -webkit-fill-available;
+      height: 100dvh;
       z-index: 0;
     }
 
@@ -3123,9 +3132,11 @@
     /* ── Viewport height fix (iOS Safari URL bar) ── */
     function setAppHeight() {
       document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+      if (typeof map !== 'undefined') map.resize();
     }
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
+    map.on('load', () => { map.resize(); });
 
     /* ── Init ── */
     async function init() {
