@@ -125,18 +125,43 @@
 
     /* ── Markers ── */
     .custom-marker {
+      position: relative;
       width: 13px;
       height: 13px;
       border-radius: 50%;
       border: 2px solid rgba(255, 255, 255, 0.92);
       cursor: pointer;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.1);
-      /* Prevent Mapbox transform issues */
       will-change: transform;
     }
 
     .custom-marker:hover {
       transform: scale(1.7);
+      z-index: 1000 !important;
+    }
+
+    .marker-hover-popup {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%) translateY(5px);
+      width: 32px;
+      height: 32px;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid #fff;
+      border-radius: 3px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .custom-marker:hover .marker-hover-popup {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
     }
 
     .custom-marker.active {
@@ -2062,13 +2087,13 @@
 
     /* Restore Mapbox controls affected by map inset: -100px */
     .mapboxgl-ctrl-top-left {
-      top: calc(100px + 60px + 10px) !important;
-      left: calc(100px + 20px) !important;
+      top: calc(100px + 60px + 3px) !important;
+      left: calc(100px + 5px) !important;
     }
 
     .mapboxgl-ctrl-top-right {
-      top: calc(100px + 60px + 10px) !important;
-      right: calc(100px + 20px) !important;
+      top: calc(100px + 60px + 3px) !important;
+      right: calc(100px + 5px) !important;
     }
 
     .mapboxgl-ctrl-bottom-left {
@@ -2863,6 +2888,14 @@
       const color = COLORS[loc.category] || '#888';
       const div = document.createElement('div');
       div.className = 'custom-marker'; div.style.background = color;
+
+      if (loc.photo) {
+        const popup = document.createElement('div');
+        popup.className = 'marker-hover-popup';
+        popup.style.backgroundImage = `url('${loc.photo}')`;
+        div.appendChild(popup);
+      }
+
       div.addEventListener('click', e => {
         if (isPicking) return;
         e.stopPropagation();
