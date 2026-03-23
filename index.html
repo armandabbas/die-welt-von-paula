@@ -2905,7 +2905,7 @@
         openSidebar(loc);
         map.flyTo({ center: [targetLng, targetLat], zoom: 16, pitch: 55, bearing: -17, duration: 11000 });
       });
-      const m = new mapboxgl.Marker({ element: div, anchor: 'center', pitchAlignment: 'map' })
+      const m = new mapboxgl.Marker({ element: div, anchor: 'center', pitchAlignment: 'viewport' })
         .setLngLat([loc._dlng ?? loc.lng, loc._dlat ?? loc.lat])
         .addTo(map);
       return m;
