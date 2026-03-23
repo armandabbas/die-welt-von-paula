@@ -1910,9 +1910,10 @@
 
     .map-fold-container {
       position: absolute;
-      inset: 0;
+      top: -100px;
+      bottom: -100px;
+      left: 0;
       width: 100vw;
-      height: 100vh;
       transform-style: preserve-3d;
       perspective: 2000px;
     }
@@ -1920,7 +1921,7 @@
     .panel {
       position: absolute;
       top: 0;
-      height: 100vh;
+      bottom: 0;
       background: linear-gradient(90deg, rgba(0, 0, 0, 0.03) 0%, transparent 3%, transparent 97%, rgba(0, 0, 0, 0.03) 100%), #fbf9f6;
       transform-style: preserve-3d;
       border-right: 0.5px solid rgba(210, 204, 196, 0.4);
