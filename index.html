@@ -3127,12 +3127,13 @@
 
     /* ── Viewport height fix (iOS Safari URL bar) ── */
     function setAppHeight() {
-      document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
-      if (typeof map !== 'undefined') map.resize();
+      const h = window.screen.height + 'px';
+      document.getElementById('map').style.height = h;
+      map.resize();
     }
     setAppHeight();
     window.addEventListener('resize', setAppHeight);
-    map.on('load', () => { map.resize(); });
+    map.on('load', setAppHeight);
 
     /* ── Init ── */
     async function init() {
