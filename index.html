@@ -2470,6 +2470,7 @@
     let photoDataUrl = null;
     let editingLoc = null;
     let currentSidebarLoc = null;
+    let photoBlob = null;
     let addrTimer = null;
     let toastTimer = null;
     let isLoveUnlocked = false;
@@ -2512,23 +2513,16 @@
           c.width = Math.round(img.width * scale);
           c.height = Math.round(img.height * scale);
           c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-          resolve(c.toDataURL('image/jpeg', 0.65));
+          c.toBlob(blob => resolve(blob), 'image/jpeg', 0.65);
         };
         img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Bild konnte nicht geladen werden')); };
         img.src = url;
       });
     }
 
-    function dataUrlToBlob(dataUrl) {
-      const [header, b64] = dataUrl.split(',');
-      const mime = header.match(/:(.*?);/)[1];
-      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-      return new Blob([bytes], { type: mime });
-    }
-
-    async function uploadToCloudinary(dataUrl) {
+    async function uploadToCloudinary(blob) {
       const fd = new FormData();
-      fd.append('file', dataUrlToBlob(dataUrl));
+      fd.append('file', blob);
       fd.append('upload_preset', CONFIG.CLOUDINARY_PRESET);
       const r = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
       const j = await r.json();
@@ -3053,8 +3047,8 @@
       catSelect.classList.remove('invalid');
       document.getElementById('f-submit').disabled = false;
       setCoords(null, null, '');
-      clearPhotoPreview();
-      photoDataUrl = null; formLat = null; formLng = null;
+      document.getElementById('f-category-sel').value = '';
+      photoDataUrl = null; photoBlob = null; formLat = null; formLng = null;
       if (previewMarker) { previewMarker.remove(); previewMarker = null; }
     }
 
@@ -3117,7 +3111,7 @@
     });
     async function doSearch(q) {
       try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=4&accept-language=de&addressdetails=1`);
+        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=4&accept-language=de`);
         const data = await r.json();
         renderSuggestions(data);
       } catch (_) { }
@@ -3158,14 +3152,17 @@
       const file = this.files[0];
       if (!file) return;
       try {
-        photoDataUrl = await compressImage(file);
+        const compressedBlob = await compressImage(file);
+        photoBlob = compressedBlob;
+        photoDataUrl = URL.createObjectURL(compressedBlob); // Create a data URL for preview
         document.getElementById('photo-preview-img').src = photoDataUrl;
         document.getElementById('photo-preview-box').style.display = 'block';
       } catch (e) { showToast('Bild konnte nicht geladen werden', 'error'); }
     });
     document.getElementById('photo-remove-btn').addEventListener('click', clearPhotoPreview);
     function clearPhotoPreview() {
-      photoDataUrl = null;
+      if (photoDataUrl && photoDataUrl.startsWith('blob:')) URL.revokeObjectURL(photoDataUrl); // Clean up blob URL
+      photoDataUrl = null; photoBlob = null;
       document.getElementById('f-photo-input').value = '';
       document.getElementById('photo-preview-img').src = '';
       document.getElementById('photo-preview-box').style.display = 'none';
@@ -3197,11 +3194,11 @@
       // Upload new photo to Cloudinary if it's a fresh data URL
       let photoUrl = photoDataUrl;
       let photoId = editingLoc?.photoId || null;
-      if (photoDataUrl && photoDataUrl.startsWith('data:')) {
-        btn.textContent = 'Foto wird hochgeladen…';
+      if (photoBlob && photoDataUrl && photoDataUrl.startsWith('blob:')) {
+        document.getElementById('btn-save-loc').textContent = 'Foto wird hochgeladen…';
         if (editingLoc?.photoId) await deleteFromCloudinary(editingLoc.photoId);
         try {
-          const up = await uploadToCloudinary(photoDataUrl);
+          const up = await uploadToCloudinary(photoBlob);
           photoUrl = up.url; photoId = up.publicId;
         } catch (e) {
           showToast('Foto-Upload: ' + e.message, 'error');
