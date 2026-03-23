@@ -71,7 +71,12 @@
       line-height: 1;
       user-select: none;
       -webkit-user-select: none;
-      cursor: default;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
+
+    #topbar-title:hover {
+      opacity: 0.7;
     }
 
     #topbar-subtitle {
@@ -3425,6 +3430,34 @@
           setTimeout(() => {
             greeting.classList.add('hidden');
           }, 1800);
+        });
+      }
+
+      // Return to home screen on title click
+      const topbarTitle = document.getElementById('topbar-title');
+      if (topbarTitle) {
+        topbarTitle.addEventListener('click', () => {
+          closeSidebar();
+          closeForm();
+          // Reset greeting screen
+          const greetingScreen = document.getElementById('greeting-screen');
+          const greetingUi = document.getElementById('greeting-ui');
+          const foldContainer = document.querySelector('.map-fold-container');
+
+          greetingScreen.classList.remove('hidden');
+          greetingUi.classList.remove('hidden');
+          foldContainer.classList.remove('unfold-step-1', 'unfold-step-2');
+
+          // Reset map to initial state
+          const isMobile = window.innerWidth <= 500;
+          map.flyTo({
+            center: isMobile ? [13, 44] : [11.5, 48.5],
+            zoom: isMobile ? 3.2 : 4,
+            pitch: 0,
+            bearing: 0,
+            duration: 2000,
+            essential: true
+          });
         });
       }
 
