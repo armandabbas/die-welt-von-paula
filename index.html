@@ -1898,7 +1898,7 @@
       justify-content: center;
       background-color: #fcfaf8;
       transition: opacity 1.2s ease, visibility 1.2s;
-      perspective: 1200px;
+      perspective: 1500px;
       pointer-events: all;
     }
 
@@ -1909,83 +1909,127 @@
     }
 
     .map-fold-container {
+      position: relative;
       display: flex;
+      align-items: center;
+      justify-content: center;
       width: 100vw;
       height: 100vh;
       transform-style: preserve-3d;
-      transition: transform 1.5s cubic-bezier(0.64, 0, 0.35, 1);
     }
 
-    .map-panel {
-      flex: 1;
+    .panel {
+      position: absolute;
+      top: 0;
+      width: 20vw;
+      height: 100vh;
       background: #fcfaf8;
-      border-right: 0.5px solid rgba(210, 204, 196, 0.3);
-      box-shadow: inset 5px 0 15px rgba(0, 0, 0, 0.015), inset -5px 0 15px rgba(0, 0, 0, 0.015);
       transform-style: preserve-3d;
-      transition: transform 1.8s cubic-bezier(0.64, 0, 0.35, 1);
-    }
-
-    .map-panel:last-child {
-      border-right: none;
-    }
-
-    .panel-left {
-      transform-origin: right center;
-      transform: rotateY(80deg);
-    }
-
-    .panel-right {
-      transform-origin: left center;
-      transform: rotateY(-80deg);
+      box-shadow: inset -2px 0 10px rgba(0, 0, 0, 0.015), inset 2px 0 10px rgba(0, 0, 0, 0.015);
+      border-right: 0.5px solid rgba(210, 204, 196, 0.3);
+      border-left: 0.5px solid rgba(210, 204, 196, 0.3);
     }
 
     .panel-center {
+      position: relative;
+      z-index: 10;
+    }
+
+    .panel-left-1 {
+      right: 100%;
+      transform-origin: right center;
+      transform: rotateY(179deg);
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 30;
+    }
+
+    .panel-left-2 {
+      right: 100%;
+      transform-origin: right center;
+      transform: rotateY(-179deg);
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .panel-right-1 {
+      left: 100%;
+      transform-origin: left center;
+      transform: rotateY(-179deg);
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 20;
+    }
+
+    .panel-right-2 {
+      left: 100%;
+      transform-origin: left center;
+      transform: rotateY(179deg);
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Unfold Sequence */
+    .map-fold-container.unfold .panel-right-1 {
+      transform: rotateY(0deg);
+      transition-delay: 0s;
+    }
+
+    .map-fold-container.unfold .panel-left-1 {
+      transform: rotateY(0deg);
+      transition-delay: 0.5s;
+    }
+
+    .map-fold-container.unfold .panel-right-2 {
+      transform: rotateY(0deg);
+      transition-delay: 1.0s;
+    }
+
+    .map-fold-container.unfold .panel-left-2 {
+      transform: rotateY(0deg);
+      transition-delay: 1.5s;
+    }
+
+    /* UI Cover */
+    #greeting-ui {
+      position: absolute;
+      inset: 0;
+      z-index: 50;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      transform: translateZ(-150px);
-      transition: transform 1.8s cubic-bezier(0.64, 0, 0.35, 1);
-      z-index: -1;
+      transition: opacity 0.5s ease;
+      /* Soft paper gradient cover to obscure folds */
+      background: linear-gradient(135deg, rgba(252, 250, 248, 0.95), rgba(245, 242, 238, 0.95));
+    }
+
+    #greeting-ui.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     .greeting-title {
       font-family: 'Cormorant Garamond', serif;
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 600;
       color: #1a1714;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 1s ease 0.4s, transform 1s ease 0.4s;
       text-align: center;
+      margin-bottom: 30px;
     }
 
-    .greeting-subtitle {
+    #btn-entdecken {
+      background: none;
+      border: 1px solid rgba(26, 23, 20, 0.8);
+      color: #1a1714;
       font-family: 'Inter', sans-serif;
       font-size: 11px;
-      color: #9c9590;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      margin-top: 8px;
-      opacity: 0;
-      transform: translateY(10px);
-      transition: opacity 1s ease 0.6s, transform 1s ease 0.6s;
-      text-align: center;
+      padding: 12px 28px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
     }
 
-    .map-fold-container.unfold .panel-left,
-    .map-fold-container.unfold .panel-right {
-      transform: rotateY(0deg);
-    }
-
-    .map-fold-container.unfold .panel-center {
-      transform: translateZ(0);
-    }
-
-    .map-fold-container.unfold .greeting-title,
-    .map-fold-container.unfold .greeting-subtitle {
-      opacity: 1;
-      transform: translateY(0);
+    #btn-entdecken:hover {
+      background: #1a1714;
+      color: #fff;
     }
   </style>
 </head>
@@ -1994,12 +2038,24 @@
 
   <div id="greeting-screen">
     <div class="map-fold-container">
-      <div class="map-panel panel-left"></div>
-      <div class="map-panel panel-center">
-        <div class="greeting-title">Die Welt von Paula</div>
-        <div class="greeting-subtitle">Willkommen</div>
+      <div class="panel panel-center">
+        <!-- Inner Left -->
+        <div class="panel panel-left-1">
+          <!-- Outer Left -->
+          <div class="panel panel-left-2"></div>
+        </div>
+
+        <!-- Inner Right -->
+        <div class="panel panel-right-1">
+          <!-- Outer Right -->
+          <div class="panel panel-right-2"></div>
+        </div>
       </div>
-      <div class="map-panel panel-right"></div>
+    </div>
+
+    <div id="greeting-ui">
+      <div class="greeting-title">Entdecke Paulas Welt</div>
+      <button id="btn-entdecken">Entdecken</button>
     </div>
   </div>
 
@@ -3250,15 +3306,22 @@
       const greeting = document.getElementById('greeting-screen');
       const container = document.querySelector('.map-fold-container');
 
-      // Start unfold animation
-      setTimeout(() => {
-        if (container) container.classList.add('unfold');
-      }, 100);
+      const btnEntdecken = document.getElementById('btn-entdecken');
+      const greetingUi = document.getElementById('greeting-ui');
 
-      // Hide completely after unfold
-      setTimeout(() => {
-        if (greeting) greeting.classList.add('hidden');
-      }, 2600);
+      if (btnEntdecken && container && greeting) {
+        btnEntdecken.addEventListener('click', () => {
+          greetingUi.classList.add('hidden');
+          setTimeout(() => {
+            container.classList.add('unfold');
+          }, 300);
+
+          // Hide completely after unfold sequence
+          setTimeout(() => {
+            greeting.classList.add('hidden');
+          }, 2800);
+        });
+      }
 
       await loadData();
       markerInstances = LOCS.map(loc => createMarkerFor(loc));
