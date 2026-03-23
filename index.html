@@ -111,9 +111,15 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
+      right: 0;
+      bottom: 0;
       z-index: 0;
+    }
+
+    @supports (padding: env(safe-area-inset-bottom)) {
+      #map {
+        bottom: calc(-1 * env(safe-area-inset-bottom, 0px));
+      }
     }
 
 
@@ -3126,7 +3132,11 @@
     document.getElementById('story-btn').addEventListener('click', enterStoryMode);
     document.getElementById('story-close').addEventListener('click', exitStoryMode);
 
-    map.on('load', () => map.resize());
+    map.on('load', () => {
+      map.resize();
+      setTimeout(() => map.resize(), 300);
+      setTimeout(() => map.resize(), 1000);
+    });
     window.addEventListener('resize', () => map.resize());
 
     /* ── Init ── */
