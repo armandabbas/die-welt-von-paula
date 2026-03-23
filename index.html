@@ -2551,10 +2551,25 @@
 
         // Setup real-time listener
         db.collection('memories').onSnapshot(snap => {
-          LOCS = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+          LOCS = snap.docs.map(doc => {
+            const data = doc.data();
+            return {
+              ...data,
+              id: doc.id,
+              // Convert Firestore timestamp if it exists, otherwise use what's there
+              updatedAt: data.updatedAt?.toDate ? data.updatedAt.toDate() : data.updatedAt
+            };
+          });
           updateCount();
           buildLegend();
           rebuildAllMarkers();
+        }, err => {
+          console.error("Firestore real-time error:", err);
+          if (err.code === 'permission-denied') {
+            showToast('Firestore Zugriff verweigert. Bitte Regeln prüfen.', 'error');
+          } else {
+            showToast('Fehler bei der Live-Synchronisierung', 'error');
+          }
         });
       } catch (e) {
         console.error("Firestore Load Error:", e);
