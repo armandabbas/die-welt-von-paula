@@ -3039,7 +3039,7 @@
     }
     async function handleMapPick(lat, lng) {
       stopPicking();
-      formLat = lat; formLng = lng;
+      formLat = parseFloat(lat); formLng = parseFloat(lng);
       if (previewMarker) previewMarker.remove();
       const pmDiv = document.createElement('div');
       pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
@@ -3189,7 +3189,7 @@
         }
         closeForm();
         // UI will be updated automatically by onSnapshot
-        if (!editingLoc) map.panTo({ center: [data.lng, data.lat] });
+        if (!editingLoc) map.panTo([data.lng, data.lat]);
         editingLoc = null;
       } catch (e) {
         showToast('Fehler beim Speichern: ' + e.message, 'error');
