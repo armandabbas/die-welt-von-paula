@@ -1829,10 +1829,6 @@
       margin-bottom: 26px;
     }
 
-    .sc-word {
-      opacity: 0;
-      transition: opacity 0.35s ease;
-    }
 
     .sc-photo {
       width: 100%;
@@ -2537,6 +2533,25 @@
     /* ── Sidebar ── */
     const sidebar = document.getElementById('sidebar');
 
+    const cardTypewriters = new Map();
+    function typeWords(el, text) {
+      const id = el.closest('.story-card')?.dataset.idx;
+      if (cardTypewriters.has(id)) { clearInterval(cardTypewriters.get(id)); }
+      el.textContent = '';
+      if (!text) return;
+      const words = text.split(' ');
+      let i = 0;
+      const timer = setInterval(() => {
+        if (i < words.length) {
+          el.textContent += (i === 0 ? '' : ' ') + words[i++];
+        } else {
+          clearInterval(timer);
+          if (id) cardTypewriters.delete(id);
+        }
+      }, 60);
+      if (id) cardTypewriters.set(id, timer);
+    }
+
     let currentTypewriter = null;
     function typeText(el, text, totalMs) {
       if (currentTypewriter) clearInterval(currentTypewriter);
@@ -3039,7 +3054,7 @@
         <div class="sc-name">${loc.name}</div>
         <div class="sc-date">${loc.date || ''}</div>
         <div class="sc-rule"></div>
-        <div class="sc-story">${(loc.story || '').split(' ').map(w => `<span class="sc-word">${w}</span>`).join(' ')}</div>
+        <div class="sc-story" data-story="${(loc.story || '').replace(/"/g, '&quot;')}"></div>
         ${loc.photo ? `<img class="sc-photo" src="${loc.photo}" alt="${loc.name}" />` : ''}
         <div class="sc-from-label">Erinnerung von</div>
         <div class="sc-from-name">${loc.from || '—'}</div>
@@ -3064,15 +3079,14 @@
       storyObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
           if (!entry.isIntersecting) {
-            entry.target.querySelectorAll('.sc-word').forEach(w => { w.style.opacity = '0'; });
+            const stEl = entry.target.querySelector('.sc-story');
+            if (stEl) stEl.textContent = '';
             return;
           }
           document.querySelectorAll('.story-card').forEach(c => c.classList.remove('active'));
           entry.target.classList.add('active');
-          const words = entry.target.querySelectorAll('.sc-word');
-          words.forEach((w, i) => {
-            setTimeout(() => { w.style.opacity = '1'; }, i * 35);
-          });
+          const storyEl = entry.target.querySelector('.sc-story');
+          if (storyEl) typeWords(storyEl, storyEl.dataset.story || '');
           const idx = parseInt(entry.target.dataset.idx);
           document.getElementById('story-progress-fill').style.width = ((idx + 1) / total * 100) + '%';
           const loc = locs[idx];
@@ -3088,8 +3102,8 @@
       // Trigger first card immediately
       if (cards[0]) {
         cards[0].classList.add('active');
-        const firstWords = cards[0].querySelectorAll('.sc-word');
-        firstWords.forEach((w, i) => { setTimeout(() => { w.style.opacity = '1'; }, i * 35); });
+        const firstStoryEl = cards[0].querySelector('.sc-story');
+        if (firstStoryEl) typeWords(firstStoryEl, firstStoryEl.dataset.story || '');
         const loc = locs[0];
         if (loc) {
           const isMobile = window.innerWidth <= 500;
