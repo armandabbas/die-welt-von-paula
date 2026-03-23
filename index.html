@@ -118,8 +118,8 @@
       left: 0;
       width: 100vw;
       height: 100vh;
-      height: 100lvh;
-      /* Large viewport height ensures it goes behind URL bar */
+      height: 100dvh;
+      height: var(--app-height, 100dvh);
       z-index: 0;
     }
 
@@ -3122,6 +3122,13 @@
 
     document.getElementById('story-btn').addEventListener('click', enterStoryMode);
     document.getElementById('story-close').addEventListener('click', exitStoryMode);
+
+    /* ── Viewport height fix (iOS Safari URL bar) ── */
+    function setAppHeight() {
+      document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+    }
+    setAppHeight();
+    window.addEventListener('resize', setAppHeight);
 
     /* ── Init ── */
     async function init() {
