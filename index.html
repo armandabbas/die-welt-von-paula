@@ -1909,121 +1909,77 @@
     }
 
     .map-fold-container {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute;
+      inset: 0;
       width: 100vw;
       height: 100vh;
       transform-style: preserve-3d;
+      perspective: 2000px;
     }
 
     .panel {
       position: absolute;
       top: 0;
-      width: 20vw;
       height: 100vh;
-      background: rgba(252, 250, 248, 0.95);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      background: #fbf9f6;
       transform-style: preserve-3d;
-      box-shadow: inset -2px 0 10px rgba(0, 0, 0, 0.015), inset 2px 0 10px rgba(0, 0, 0, 0.015);
-      border-right: 0.5px solid rgba(210, 204, 196, 0.3);
-      border-left: 0.5px solid rgba(210, 204, 196, 0.3);
+      border-right: 0.5px solid rgba(210, 204, 196, 0.4);
+      border-left: 0.5px solid rgba(210, 204, 196, 0.4);
+      box-shadow: inset 2px 0 10px rgba(0, 0, 0, 0.015), inset -2px 0 10px rgba(0, 0, 0, 0.015);
     }
 
-    .panel-center {
-      position: relative;
+    .panel-left-outer {
+      left: 0;
+      width: 25vw;
+      transform-origin: left center;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 10;
     }
 
-    .panel-left-1 {
-      right: 100%;
-      transform-origin: right center;
-      transform: rotateY(179deg);
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 30;
-    }
-
-    .panel-left-2 {
-      right: 100%;
-      transform-origin: right center;
-      transform: rotateY(-179deg);
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .panel-right-1 {
+    .panel-left-inner {
       left: 100%;
+      width: 25vw;
       transform-origin: left center;
-      transform: rotateY(-179deg);
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 20;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 11;
     }
 
-    .panel-right-2 {
-      left: 100%;
-      transform-origin: left center;
-      transform: rotateY(179deg);
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    .panel-right-outer {
+      right: 0;
+      width: 25vw;
+      transform-origin: right center;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+    }
+
+    .panel-right-inner {
+      right: 100%;
+      width: 25vw;
+      transform-origin: right center;
+      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 11;
     }
 
     /* Unfold Sequence */
-    .map-fold-container.unfold .panel-right-1 {
-      transform: rotateY(0deg);
-      transition-delay: 0s;
+    /* Step 1: inner panels fold outward over outer panels */
+    .map-fold-container.unfold-step-1 .panel-left-inner {
+      transform: rotateY(179deg);
     }
 
-    .map-fold-container.unfold .panel-left-1 {
-      transform: rotateY(0deg);
-      transition-delay: 0.5s;
+    .map-fold-container.unfold-step-1 .panel-right-inner {
+      transform: rotateY(-179deg);
     }
 
-    .map-fold-container.unfold .panel-right-2 {
-      transform: rotateY(0deg);
-      transition-delay: 1.0s;
+    /* Step 2: outer panels (carrying folded inner panels) fold completely off-screen */
+    .map-fold-container.unfold-step-2 .panel-left-outer {
+      transform: rotateY(179deg);
     }
 
-    .map-fold-container.unfold .panel-left-2 {
-      transform: rotateY(0deg);
-      transition-delay: 1.5s;
+    .map-fold-container.unfold-step-2 .panel-right-outer {
+      transform: rotateY(-179deg);
     }
 
-    /* Curtains */
-    .curtain {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 50vw;
-      background-color: #fcfaf8;
-      z-index: 5;
-      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    }
 
-    .curtain-left {
-      left: 0;
-      transform: translateX(-10vw);
-    }
-
-    .curtain-right {
-      right: 0;
-      transform: translateX(10vw);
-    }
-
-    .unfold-step-1~.curtain-right {
-      transform: translateX(30vw);
-    }
-
-    .unfold-step-2~.curtain-left {
-      transform: translateX(-30vw);
-    }
-
-    .unfold-step-3~.curtain-right {
-      transform: translateX(50vw);
-    }
-
-    .unfold-step-4~.curtain-left {
-      transform: translateX(-50vw);
-    }
 
     @keyframes subtleBreath {
 
@@ -2047,7 +2003,7 @@
       align-items: center;
       justify-content: center;
       transition: opacity 0.5s ease;
-      background: linear-gradient(135deg, rgba(252, 250, 248, 0.95), rgba(245, 242, 238, 0.95));
+      background: transparent;
       animation: subtleBreath 7s ease-in-out infinite;
     }
 
@@ -2089,25 +2045,20 @@
 
   <div id="greeting-screen">
     <div class="map-fold-container">
-      <div class="panel panel-center">
-        <!-- Inner Left -->
-        <div class="panel panel-left-1">
-          <!-- Outer Left -->
-          <div class="panel panel-left-2"></div>
-        </div>
-
-        <!-- Inner Right -->
-        <div class="panel panel-right-1">
-          <!-- Outer Right -->
-          <div class="panel panel-right-2"></div>
-        </div>
+      <div class="panel panel-left-outer">
+        <div class="panel panel-left-inner"></div>
+      </div>
+      <div class="panel panel-right-outer">
+        <div class="panel panel-right-inner"></div>
       </div>
     </div>
-    <div class="curtain curtain-left"></div>
-    <div class="curtain curtain-right"></div>
 
     <div id="greeting-ui">
-      <div class="greeting-title">Entdecke Paulas Welt</div>
+      <div class="greeting-subtitle" style="margin-bottom:0;">Willkommen</div>
+      <div class="greeting-title" style="margin-bottom:8px;">Paulas Welt</div>
+      <div class="greeting-text"
+        style="font-family:'Inter', sans-serif; font-size: 13px; color:#a09890; margin-bottom: 30px; letter-spacing:0.02em;">
+        Finde heraus, was dich erwartet.</div>
       <button id="btn-entdecken">Entdecken</button>
     </div>
   </div>
@@ -3366,18 +3317,15 @@
         btnEntdecken.addEventListener('click', () => {
           greetingUi.classList.add('hidden');
           setTimeout(() => {
-            container.classList.add('unfold');
             container.classList.add('unfold-step-1');
           }, 300);
 
-          setTimeout(() => container.classList.add('unfold-step-2'), 800);
-          setTimeout(() => container.classList.add('unfold-step-3'), 1300);
-          setTimeout(() => container.classList.add('unfold-step-4'), 1800);
+          setTimeout(() => container.classList.add('unfold-step-2'), 1100);
 
           // Hide completely after unfold sequence
           setTimeout(() => {
             greeting.classList.add('hidden');
-          }, 3200);
+          }, 2100);
         });
       }
 
