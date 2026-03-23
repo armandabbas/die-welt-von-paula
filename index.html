@@ -2538,16 +2538,16 @@
       if (cardTypewriters.has(id)) { clearInterval(cardTypewriters.get(id)); }
       el.textContent = '';
       if (!text) return;
-      const words = text.split(' ');
+      const chars = text.split('');
       let i = 0;
       const timer = setInterval(() => {
-        if (i < words.length) {
-          el.textContent += (i === 0 ? '' : ' ') + words[i++];
+        if (i < chars.length) {
+          el.textContent += chars[i++];
         } else {
           clearInterval(timer);
           if (id) cardTypewriters.delete(id);
         }
-      }, 150);
+      }, 45);
       if (id) cardTypewriters.set(id, timer);
     }
 
@@ -3054,11 +3054,14 @@
         <div class="sc-date">${loc.date || ''}</div>
         <div class="sc-rule"></div>
         <div class="sc-story" data-story="${(loc.story || '').replace(/"/g, '&quot;')}"></div>
-        ${loc.photo ? `<img class="sc-photo" src="${loc.photo}" alt="${loc.name}" />` : ''}
+        ${loc.photo ? `<img class="sc-photo" src="${loc.photo}" alt="${loc.name}" style="cursor:zoom-in" />` : ''}
         <div class="sc-from-label">Erinnerung von</div>
         <div class="sc-from-name">${loc.from || '—'}</div>
       `;
         scroll.appendChild(card);
+        if (loc.photo) {
+          card.querySelector('.sc-photo').addEventListener('click', () => openLightbox(loc.photo));
+        }
       });
       return locs;
     }
