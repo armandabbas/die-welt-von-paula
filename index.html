@@ -110,12 +110,7 @@
     /* ── Map ── */
     #map {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      width: 100vw;
-      height: 100vh;
-      height: 100lvh;
+      inset: 0;
       z-index: 0;
     }
 
@@ -3127,15 +3122,8 @@
     document.getElementById('story-btn').addEventListener('click', enterStoryMode);
     document.getElementById('story-close').addEventListener('click', exitStoryMode);
 
-    /* ── Viewport height fix (iOS Safari URL bar) ── */
-    function setAppHeight() {
-      const h = window.screen.height + 'px';
-      document.getElementById('map').style.height = h;
-      map.resize();
-    }
-    setAppHeight();
-    window.addEventListener('resize', setAppHeight);
-    map.on('load', setAppHeight);
+    map.on('load', () => map.resize());
+    window.addEventListener('resize', () => map.resize());
 
     /* ── Init ── */
     async function init() {
