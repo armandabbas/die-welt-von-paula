@@ -2516,7 +2516,7 @@
 
     async function uploadToCloudinary(blob) {
       const fd = new FormData();
-      fd.append('file', blob);
+      fd.append('file', blob, 'upload.jpg');
       fd.append('upload_preset', CONFIG.CLOUDINARY_PRESET);
       const r = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
       const j = await r.json();
