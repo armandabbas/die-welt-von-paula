@@ -3047,7 +3047,7 @@
       catSelect.classList.remove('invalid');
       document.getElementById('f-submit').disabled = false;
       setCoords(null, null, '');
-      document.getElementById('f-category-sel').value = '';
+      catSelect.value = '';
       photoDataUrl = null; photoBlob = null; formLat = null; formLng = null;
       if (previewMarker) { previewMarker.remove(); previewMarker = null; }
     }
