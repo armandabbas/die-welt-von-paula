@@ -2257,11 +2257,12 @@
     /* ── Map ── */
     const MAPBOX_TOKEN = [57, 34, 103, 44, 48, 3, 120, 0, 35, 38, 32, 16, 17, 3, 61, 16, 30, 124, 34, 16, 30, 3, 32, 16, 17, 4, 32, 5, 10, 3, 33, 0, 35, 38, 32, 16, 123, 120, 61, 45, 13, 34, 125, 45, 14, 3, 34, 4, 30, 61, 32, 45, 29, 3, 49, 42, 123, 3, 49, 42, 29, 12, 49, 45, 122, 11, 51, 42, 26, 3, 112, 103, 59, 49, 27, 49, 57, 24, 44, 120, 8, 59, 57, 19, 24, 100, 17, 5, 42, 5, 28, 38, 39, 24].map(b => String.fromCharCode(b ^ 73)).join('');
     mapboxgl.accessToken = MAPBOX_TOKEN;
+    const isMobileInit = window.innerWidth <= 500;
     const map = new mapboxgl.Map({
       container: 'map',
       style: 'mapbox://styles/armandabbas/cmmta3pr2002u01s8br0vc4hw',
-      center: [11.5, 48.5],
-      zoom: 4,
+      center: isMobileInit ? [13, 44] : [11.5, 48.5],
+      zoom: isMobileInit ? 3.2 : 4,
       pitch: 0,
       bearing: 0
     });
