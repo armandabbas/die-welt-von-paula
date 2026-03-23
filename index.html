@@ -1957,8 +1957,10 @@
       content: '';
       position: absolute;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-      opacity: 0.25;
+      /* Replace heavy SVG turbulence with a safe, lightweight CSS repeating pattern */
+      background-image: repeating-radial-gradient(circle at 17% 32%, rgba(0, 0, 0, 0.04), transparent 1px), repeating-radial-gradient(circle at 83% 68%, rgba(0, 0, 0, 0.04), transparent 1px);
+      background-size: 6px 6px;
+      opacity: 0.8;
       mix-blend-mode: multiply;
       pointer-events: none;
     }
@@ -2162,9 +2164,8 @@
 
     <div id="greeting-ui">
       <div class="seal" id="btn-entdecken">
-        <div class="seal-subtitle">Willkommen</div>
         <div class="seal-title">Paulas<br>Welt</div>
-        <div class="seal-text">Entdecken</div>
+        <div class="seal-text">Klicken um<br>einzutreten</div>
       </div>
     </div>
   </div>
