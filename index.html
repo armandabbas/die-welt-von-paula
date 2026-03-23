@@ -1985,11 +1985,11 @@
 
       0%,
       100% {
-        transform: scale(1) translateY(0);
+        transform: translateZ(50px) scale(1) translateY(0);
       }
 
       50% {
-        transform: scale(1.02) translateY(-2px);
+        transform: translateZ(50px) scale(1.02) translateY(-2px);
       }
     }
 
@@ -2037,6 +2037,27 @@
     #btn-entdecken:hover {
       background: #1a1714;
       color: #fff;
+    }
+
+    /* Restore Mapbox controls affected by map inset: -100px */
+    .mapboxgl-ctrl-top-left {
+      top: calc(100px + 60px + 10px) !important;
+      left: calc(100px + 20px) !important;
+    }
+
+    .mapboxgl-ctrl-top-right {
+      top: calc(100px + 60px + 10px) !important;
+      right: calc(100px + 20px) !important;
+    }
+
+    .mapboxgl-ctrl-bottom-left {
+      bottom: calc(100px + 20px) !important;
+      left: calc(100px + 20px) !important;
+    }
+
+    .mapboxgl-ctrl-bottom-right {
+      bottom: calc(100px + 20px) !important;
+      right: calc(100px + 20px) !important;
     }
   </style>
 </head>
