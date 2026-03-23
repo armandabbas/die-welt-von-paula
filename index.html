@@ -2377,7 +2377,7 @@
           listView.classList.remove('active');
           innerView.classList.remove('hidden');
           const idx = LOCS.indexOf(loc);
-          map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, duration: 5000 });
+          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, duration: 5000 });
           openSidebar(loc);
           setTimeout(() => {
             if (idx !== -1 && markerInstances[idx]) {
@@ -2659,7 +2659,7 @@
         const targetLng = loc._dlng ?? loc.lng;
         const targetLat = loc._dlat ?? loc.lat;
         openSidebar(loc);
-        map.flyTo({ center: [targetLng, targetLat], zoom: 13, duration: 5000 });
+        map.flyTo({ center: [targetLng, targetLat], zoom: 16, duration: 5000 });
       });
       const m = new mapboxgl.Marker({ element: div, anchor: 'center', pitchAlignment: 'map' })
         .setLngLat([loc._dlng ?? loc.lng, loc._dlat ?? loc.lat])
@@ -2842,7 +2842,7 @@
           const pmDiv = document.createElement('div');
           pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
           previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center', pitchAlignment: 'map' }).setLngLat([lng, lat]).addTo(map);
-          map.flyTo({ center: [lng, lat], zoom: 13, duration: 5000 });
+          map.flyTo({ center: [lng, lat], zoom: 16, duration: 5000 });
         });
       });
     }
@@ -2979,7 +2979,7 @@
       closeSidebar();
       const loc = pool[Math.floor(Math.random() * pool.length)];
       const idx = LOCS.indexOf(loc);
-      map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, duration: 5000 });
+      map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, duration: 5000 });
       openSidebar(loc);
       setTimeout(() => {
         if (idx !== -1 && markerInstances[idx]) {
@@ -3092,7 +3092,7 @@
           if (loc) {
             const isMobile = window.innerWidth <= 500;
             const offset = isMobile ? [0, 0] : [-210, 0];
-            map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, offset: [offset[0], offset[1]], duration: 5000 });
+            map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, offset: [offset[0], offset[1]], duration: 5000 });
           }
         });
       }, { root: scroll, threshold: 0.55 });
@@ -3107,7 +3107,7 @@
         if (loc) {
           const isMobile = window.innerWidth <= 500;
           const offset = isMobile ? [0, 0] : [-210, 0];
-          map.flyTo({ center: [loc.lng, loc.lat], zoom: 13, offset: [offset[0], offset[1]], duration: 5000 });
+          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, offset: [offset[0], offset[1]], duration: 5000 });
         }
         document.getElementById('story-progress-fill').style.width = (1 / total * 100) + '%';
       }
