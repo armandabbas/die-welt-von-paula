@@ -1979,7 +1979,7 @@
       left: 0;
       width: 25vw;
       transform-origin: left center;
-      transition: transform 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
       z-index: 10;
     }
 
@@ -1987,7 +1987,7 @@
       left: 100%;
       width: 25vw;
       transform-origin: left center;
-      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
       z-index: 11;
     }
 
@@ -1995,7 +1995,7 @@
       right: 0;
       width: 25vw;
       transform-origin: right center;
-      transition: transform 0.75s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
       z-index: 10;
     }
 
@@ -2003,7 +2003,7 @@
       right: 100%;
       width: 25vw;
       transform-origin: right center;
-      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+      transition: transform 1.2s cubic-bezier(0.645, 0.045, 0.355, 1);
       z-index: 11;
     }
 
@@ -3405,16 +3405,26 @@
       if (btnEntdecken && container && greeting) {
         btnEntdecken.addEventListener('click', () => {
           greetingUi.classList.add('hidden');
+          // Start map animation immediately for homogeneous feel
+          map.flyTo({
+            center: map.getCenter(),
+            zoom: map.getZoom() + 0.8,
+            pitch: 45,
+            duration: 3500,
+            essential: true
+          });
+
           setTimeout(() => {
             container.classList.add('unfold-step-1');
           }, 300);
 
-          setTimeout(() => container.classList.add('unfold-step-2'), 1400);
+          // Start second step earlier to overlap
+          setTimeout(() => container.classList.add('unfold-step-2'), 900);
 
-          // Hide completely after unfold sequence
+          // Hide greeting earlier for a smoother transition
           setTimeout(() => {
             greeting.classList.add('hidden');
-          }, 2150);
+          }, 1800);
         });
       }
 
