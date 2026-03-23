@@ -2377,7 +2377,7 @@
           listView.classList.remove('active');
           innerView.classList.remove('hidden');
           const idx = LOCS.indexOf(loc);
-          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, duration: 8000 });
+          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, duration: 11000 });
           openSidebar(loc);
           setTimeout(() => {
             if (idx !== -1 && markerInstances[idx]) {
@@ -2547,7 +2547,7 @@
           clearInterval(timer);
           if (id) cardTypewriters.delete(id);
         }
-      }, 110);
+      }, 150);
       if (id) cardTypewriters.set(id, timer);
     }
 
@@ -2558,7 +2558,7 @@
       if (!text) return;
       const parts = text.split('');
       let i = 0;
-      const pace = Math.min(90, totalMs / parts.length); // Cap at 90ms/char
+      const pace = Math.min(120, totalMs / parts.length); // Cap at 120ms/char
       currentTypewriter = setInterval(() => {
         if (i < parts.length) {
           el.textContent += parts[i++];
@@ -2579,7 +2579,7 @@
       document.getElementById('sidebar-from-name').textContent = loc.from || '';
 
       const storyEl = document.getElementById('sidebar-story');
-      typeText(storyEl, loc.story || '', 8000);
+      typeText(storyEl, loc.story || '', 11000);
 
       const wrap = document.getElementById('sidebar-photo-wrap');
       wrap.innerHTML = '';
@@ -2659,7 +2659,7 @@
         const targetLng = loc._dlng ?? loc.lng;
         const targetLat = loc._dlat ?? loc.lat;
         openSidebar(loc);
-        map.flyTo({ center: [targetLng, targetLat], zoom: 16, pitch: 55, bearing: -17, duration: 8000 });
+        map.flyTo({ center: [targetLng, targetLat], zoom: 16, pitch: 55, bearing: -17, duration: 11000 });
       });
       const m = new mapboxgl.Marker({ element: div, anchor: 'center', pitchAlignment: 'map' })
         .setLngLat([loc._dlng ?? loc.lng, loc._dlat ?? loc.lat])
@@ -2842,7 +2842,7 @@
           const pmDiv = document.createElement('div');
           pmDiv.style.cssText = 'width:12px;height:12px;border-radius:50%;background:#1D9E75;border:2px solid #fff;box-shadow:0 0 4px rgba(0,0,0,0.3);';
           previewMarker = new mapboxgl.Marker({ element: pmDiv, anchor: 'center', pitchAlignment: 'map' }).setLngLat([lng, lat]).addTo(map);
-          map.flyTo({ center: [lng, lat], zoom: 16, pitch: 55, bearing: -17, duration: 8000 });
+          map.flyTo({ center: [lng, lat], zoom: 16, pitch: 55, bearing: -17, duration: 11000 });
         });
       });
     }
@@ -2979,7 +2979,7 @@
       closeSidebar();
       const loc = pool[Math.floor(Math.random() * pool.length)];
       const idx = LOCS.indexOf(loc);
-      map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, duration: 8000 });
+      map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, duration: 11000 });
       openSidebar(loc);
       setTimeout(() => {
         if (idx !== -1 && markerInstances[idx]) {
@@ -3092,7 +3092,7 @@
           if (loc) {
             const isMobile = window.innerWidth <= 500;
             const offset = isMobile ? [0, 0] : [-210, 0];
-            map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 8000 });
+            map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 11000 });
           }
         });
       }, { root: scroll, threshold: 0.55 });
@@ -3107,7 +3107,7 @@
         if (loc) {
           const isMobile = window.innerWidth <= 500;
           const offset = isMobile ? [0, 0] : [-210, 0];
-          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 8000 });
+          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 11000 });
         }
         document.getElementById('story-progress-fill').style.width = (1 / total * 100) + '%';
       }
