@@ -2579,11 +2579,17 @@
     async function loadData() {
       if (!isConfigured()) { LOCS = DEFAULT_LOCS.map(l => ({ ...l })); return; }
       try {
-        const url = `https://raw.githubusercontent.com/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/main/${CONFIG.DATA_FILE}?t=${Date.now()}`;
-        const res = await fetch(url);
+        const apiUrl = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${CONFIG.DATA_FILE}?t=${Date.now()}`;
+        const headers = {
+          'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        };
+        const res = await fetch(apiUrl, { headers });
         if (res.ok) {
           const json = await res.json();
-          LOCS = (json.locs || json).map(l => ({ ...l, id: l.id || genId() }));
+          const decoded = decodeURIComponent(escape(atob(json.content)));
+          const parsed = JSON.parse(decoded);
+          LOCS = (parsed.locs || parsed).map(l => ({ ...l, id: l.id || genId() }));
         } else {
           LOCS = DEFAULT_LOCS.map(l => ({ ...l }));
         }
