@@ -115,38 +115,6 @@
       z-index: 0;
     }
 
-    #mobile-tabbar {
-      display: none;
-    }
-
-    @media (max-width: 500px) {
-      #mobile-tabbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: #fcfaf8;
-        border-top: 0.5px solid rgba(210, 204, 196, 0.5);
-        padding: 10px 16px;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom));
-        z-index: 800;
-      }
-
-      #mobile-tabbar #bottom-left {
-        position: static;
-        bottom: auto;
-        left: auto;
-      }
-
-      #mobile-tabbar #add-btn {
-        position: static;
-        bottom: auto;
-        right: auto;
-      }
-    }
 
     #map.picking {
       cursor: crosshair !important;
@@ -1977,9 +1945,7 @@
     <div id="story-scroll"></div>
   </div>
 
-  <!-- Mobile tab bar -->
-  <div id="mobile-tabbar">
-    <div id="bottom-left">
+  <div id="bottom-left">
     <button id="badge-count"></button>
     <button id="story-btn">
       <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.1"
@@ -2008,9 +1974,7 @@
     </button>
   </div>
 
-    <button id="add-btn" title="Neuen Ort hinzufügen">+</button>
-    </div>
-  </div>
+  <button id="add-btn" title="Neuen Ort hinzufügen">+</button>
 
   <div id="picking-pill">
     <span class="picking-dot"></span>
