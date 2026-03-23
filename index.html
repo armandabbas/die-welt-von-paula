@@ -3195,7 +3195,7 @@
       let photoUrl = photoDataUrl;
       let photoId = editingLoc?.photoId || null;
       if (photoBlob && photoDataUrl && photoDataUrl.startsWith('blob:')) {
-        document.getElementById('btn-save-loc').textContent = 'Foto wird hochgeladen…';
+        btn.textContent = 'Foto wird hochgeladen…';
         if (editingLoc?.photoId) await deleteFromCloudinary(editingLoc.photoId);
         try {
           const up = await uploadToCloudinary(photoBlob);
