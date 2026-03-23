@@ -1375,22 +1375,22 @@
       max-height: calc(100dvh - 80px);
     }
 
-    #bottom-left {
-      bottom: calc(10px + var(--safe-bottom));
-      left: calc(16px + env(safe-area-inset-left, 0px));
-    }
-
-    #add-btn {
-      bottom: calc(10px + var(--safe-bottom));
-      right: calc(16px + env(safe-area-inset-right, 0px));
-    }
-
-    #toast {
-      bottom: calc(16px + var(--safe-bottom));
-    }
-
     /* ── iPhone Portrait (≤ 500px) ── */
     @media (max-width: 500px) {
+
+      #bottom-left {
+        bottom: calc(10px + var(--safe-bottom));
+        left: calc(16px + env(safe-area-inset-left, 0px));
+      }
+
+      #add-btn {
+        bottom: calc(10px + var(--safe-bottom));
+        right: calc(16px + env(safe-area-inset-right, 0px));
+      }
+
+      #toast {
+        bottom: calc(16px + var(--safe-bottom));
+      }
 
       /* Topbar: hide legend, tighten padding */
       #topbar {
