@@ -1829,6 +1829,11 @@
       margin-bottom: 26px;
     }
 
+    .sc-word {
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+
     .sc-photo {
       width: 100%;
       display: block;
@@ -3034,7 +3039,7 @@
         <div class="sc-name">${loc.name}</div>
         <div class="sc-date">${loc.date || ''}</div>
         <div class="sc-rule"></div>
-        <div class="sc-story">${loc.story || ''}</div>
+        <div class="sc-story">${(loc.story || '').split(' ').map(w => `<span class="sc-word">${w}</span>`).join(' ')}</div>
         ${loc.photo ? `<img class="sc-photo" src="${loc.photo}" alt="${loc.name}" />` : ''}
         <div class="sc-from-label">Erinnerung von</div>
         <div class="sc-from-name">${loc.from || '—'}</div>
@@ -3058,9 +3063,16 @@
 
       storyObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
-          if (!entry.isIntersecting) return;
+          if (!entry.isIntersecting) {
+            entry.target.querySelectorAll('.sc-word').forEach(w => { w.style.opacity = '0'; });
+            return;
+          }
           document.querySelectorAll('.story-card').forEach(c => c.classList.remove('active'));
           entry.target.classList.add('active');
+          const words = entry.target.querySelectorAll('.sc-word');
+          words.forEach((w, i) => {
+            setTimeout(() => { w.style.opacity = '1'; }, i * 35);
+          });
           const idx = parseInt(entry.target.dataset.idx);
           document.getElementById('story-progress-fill').style.width = ((idx + 1) / total * 100) + '%';
           const loc = locs[idx];
@@ -3076,6 +3088,8 @@
       // Trigger first card immediately
       if (cards[0]) {
         cards[0].classList.add('active');
+        const firstWords = cards[0].querySelectorAll('.sc-word');
+        firstWords.forEach((w, i) => { setTimeout(() => { w.style.opacity = '1'; }, i * 35); });
         const loc = locs[0];
         if (loc) {
           const isMobile = window.innerWidth <= 500;
