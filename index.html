@@ -1953,6 +1953,16 @@
       box-shadow: inset 2px 0 10px rgba(0, 0, 0, 0.015), inset -2px 0 10px rgba(0, 0, 0, 0.015);
     }
 
+    .panel::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+      opacity: 0.08;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+
     .panel::after {
       content: '';
       position: absolute;
@@ -2055,6 +2065,41 @@
     #greeting-ui.hidden {
       opacity: 0;
       pointer-events: none;
+    }
+
+    @keyframes textReveal {
+      0% {
+        opacity: 0;
+        filter: blur(12px);
+        transform: scale(0.9) translateY(10px);
+      }
+
+      100% {
+        opacity: 1;
+        filter: blur(0);
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    #greeting-ui>* {
+      opacity: 0;
+      animation: textReveal 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+    }
+
+    #greeting-ui> :nth-child(1) {
+      animation-delay: 0.2s !important;
+    }
+
+    #greeting-ui> :nth-child(2) {
+      animation-delay: 0.6s !important;
+    }
+
+    #greeting-ui> :nth-child(3) {
+      animation-delay: 1.0s !important;
+    }
+
+    #greeting-ui> :nth-child(4) {
+      animation-delay: 1.6s !important;
     }
 
     .greeting-title {
