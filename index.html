@@ -2482,13 +2482,7 @@
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
     function toBase64(str) {
-      const bytes = new TextEncoder().encode(str);
-      const CHUNK = 32768;
-      const parts = [];
-      for (let i = 0; i < bytes.length; i += CHUNK) {
-        parts.push(String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK)));
-      }
-      return btoa(parts.join(''));
+      return btoa(unescape(encodeURIComponent(str)));
     }
 
     async function sha256(text) {
@@ -2612,7 +2606,7 @@
       };
       try {
         let sha = null;
-        const info = await fetch(apiUrl, { headers });
+        const info = await fetch(apiUrl + '?t=' + Date.now(), { headers });
         if (info.ok) { sha = (await info.json()).sha; }
 
         const payload = JSON.stringify({ locs: LOCS, updatedAt: new Date().toISOString() }, null, 2);
