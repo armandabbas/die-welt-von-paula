@@ -3439,25 +3439,42 @@
         topbarTitle.addEventListener('click', () => {
           closeSidebar();
           closeForm();
-          // Reset greeting screen
+
           const greetingScreen = document.getElementById('greeting-screen');
           const greetingUi = document.getElementById('greeting-ui');
           const foldContainer = document.querySelector('.map-fold-container');
 
-          greetingScreen.classList.remove('hidden');
-          greetingUi.classList.remove('hidden');
-          foldContainer.classList.remove('unfold-step-1', 'unfold-step-2');
-
-          // Reset map to initial state
+          // 1. Reset map to Europe view
           const isMobile = window.innerWidth <= 500;
           map.flyTo({
             center: isMobile ? [13, 44] : [11.5, 48.5],
             zoom: isMobile ? 3.2 : 4,
             pitch: 0,
             bearing: 0,
-            duration: 2000,
+            duration: 2500,
             essential: true
           });
+
+          // 2. Clear markers to avoid visual clutter during reset
+          markerInstances.forEach(m => m.getElement().classList.remove('active'));
+
+          // 3. Sequenced refold
+          greetingScreen.classList.remove('hidden');
+
+          // Outer panels fold back first
+          setTimeout(() => {
+            foldContainer.classList.remove('unfold-step-2');
+          }, 100);
+
+          // Inner panels fold back
+          setTimeout(() => {
+            foldContainer.classList.remove('unfold-step-1');
+          }, 800);
+
+          // Content fades back in
+          setTimeout(() => {
+            greetingUi.classList.remove('hidden');
+          }, 1600);
         });
       }
 
