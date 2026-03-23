@@ -1921,18 +1921,28 @@
       position: absolute;
       top: 0;
       height: 100vh;
-      background: #fbf9f6;
+      background: linear-gradient(90deg, rgba(0, 0, 0, 0.03) 0%, transparent 3%, transparent 97%, rgba(0, 0, 0, 0.03) 100%), #fbf9f6;
       transform-style: preserve-3d;
       border-right: 0.5px solid rgba(210, 204, 196, 0.4);
       border-left: 0.5px solid rgba(210, 204, 196, 0.4);
       box-shadow: inset 2px 0 10px rgba(0, 0, 0, 0.015), inset -2px 0 10px rgba(0, 0, 0, 0.015);
     }
 
+    .panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      transition: opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+      pointer-events: none;
+    }
+
     .panel-left-outer {
       left: 0;
       width: 25vw;
       transform-origin: left center;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 10;
     }
 
@@ -1940,7 +1950,7 @@
       left: 100%;
       width: 25vw;
       transform-origin: left center;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 11;
     }
 
@@ -1948,7 +1958,7 @@
       right: 0;
       width: 25vw;
       transform-origin: right center;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 10;
     }
 
@@ -1956,7 +1966,7 @@
       right: 100%;
       width: 25vw;
       transform-origin: right center;
-      transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1);
       z-index: 11;
     }
 
@@ -1970,6 +1980,11 @@
       transform: rotateY(-179deg);
     }
 
+    .map-fold-container.unfold-step-1 .panel-left-inner::after,
+    .map-fold-container.unfold-step-1 .panel-right-inner::after {
+      opacity: 0.08;
+    }
+
     /* Step 2: outer panels (carrying folded inner panels) fold completely off-screen */
     .map-fold-container.unfold-step-2 .panel-left-outer {
       transform: rotateY(179deg);
@@ -1977,6 +1992,11 @@
 
     .map-fold-container.unfold-step-2 .panel-right-outer {
       transform: rotateY(-179deg);
+    }
+
+    .map-fold-container.unfold-step-2 .panel-left-outer::after,
+    .map-fold-container.unfold-step-2 .panel-right-outer::after {
+      opacity: 0.15;
     }
 
 
@@ -3341,12 +3361,12 @@
             container.classList.add('unfold-step-1');
           }, 300);
 
-          setTimeout(() => container.classList.add('unfold-step-2'), 1100);
+          setTimeout(() => container.classList.add('unfold-step-2'), 1400);
 
           // Hide completely after unfold sequence
           setTimeout(() => {
             greeting.classList.add('hidden');
-          }, 2100);
+          }, 2600);
         });
       }
 
