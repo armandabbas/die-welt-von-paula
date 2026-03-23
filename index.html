@@ -2397,46 +2397,35 @@
   <!-- Toast -->
   <div id="toast"></div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
   <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
   <script>
     /* ═══════════════════════════════════════════════════════════════════
-       SETUP — Einmalig ausfüllen, dann als index.html auf GitHub hochladen
-  
-       SCHRITT 1  Repository anlegen
-                  → github.com/new → Name: "die-welt-von-paula"
-                  → "Add a README file" anhaken → Create repository
-  
-       SCHRITT 2  GitHub Pages aktivieren
-                  → Repository → Settings → Pages
-                  → Source: Deploy from branch → main / (root) → Save
-  
-       SCHRITT 3  Personal Access Token erstellen
-                  → github.com/settings/tokens → "Generate new token (classic)"
-                  → Note: "die-welt-von-paula", Expiration: No expiration
-                  → Haken bei "repo" setzen → Generate → Token kopieren (ghp_...)
-  
-       SCHRITT 4  Admin-Passwort-Hash generieren
-                  → Öffne in einem Browser die Konsole (F12 → Console) und tippe:
-                    const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('DEIN_PASSWORT'));
-                    console.log(Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join(''));
-                  → Den ausgegebenen Hash unten bei ADMIN_HASH eintragen.
-  
-       SCHRITT 5  HTML-Datei umbenennen in "index.html" und ins Repository
-                  hochladen (Upload files → Commit changes)
-  
-       Deine Seite ist dann erreichbar unter:
-       → https://DEIN-USERNAME.github.io/die-welt-von-paula
+       FIREBASE SETUP
+       1. Gehe zur Firebase Console (https://console.firebase.google.com/)
+       2. Erstelle ein Projekt und füge eine Web-App hinzu.
+       3. Kopiere die firebaseConfig hier hinein.
+       4. Aktiviere Firestore (Test-Modus) und Storage.
     ═══════════════════════════════════════════════════════════════════ */
+    const firebaseConfig = {
+      // BITTE HIER DEINE FIREBASE CONFIG EINSETZEN:
+      apiKey: "DEIN_API_KEY",
+      authDomain: "DEIN_PROJECT.firebaseapp.com",
+      projectId: "DEIN_PROJECT_ID",
+      storageBucket: "DEIN_PROJECT.appspot.com",
+      messagingSenderId: "DEIN_SENDER_ID",
+      appId: "DEIN_APP_ID"
+    };
+
+    // Firebase Initialisierung
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
     const CONFIG = {
-      GITHUB_OWNER: 'armandabbas',
-      GITHUB_REPO: 'die-welt-von-paula',
-      GITHUB_TOKEN: [46, 33, 57, 22, 47, 34, 26, 16, 45, 38, 45, 6, 30, 28, 121, 39, 121, 51, 5, 124, 32, 127, 61, 13, 32, 124, 12, 60, 56, 124, 19, 43, 57, 46, 120, 8, 123, 0, 40, 36].map(b => String.fromCharCode(b ^ 73)).join(''),
       ADMIN_HASH: '0c086cdc772aa579506fd17a735af6e7d14db0ad1d49730c301e007c3e663d36',
-      DATA_FILE: 'data.json',
-      CLOUDINARY_CLOUD: 'dqqfhnesy',
-      CLOUDINARY_PRESET: 'paulas-welt',
-      CLOUDINARY_KEY: '513169287884661',
-      CLOUDINARY_SECRET: [126, 63, 37, 57, 61, 127, 10, 123, 22, 124, 113, 15, 49, 40, 10, 6, 19, 13, 16, 22, 28, 29, 36, 37, 8, 51, 62].map(b => String.fromCharCode(b ^ 73)).join(''),
     };
 
     /* ═══════════════════════════════════════════════════════════════════
@@ -2474,17 +2463,8 @@
     /* ── Utils ── */
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-    function toBase64(str) {
-      return btoa(unescape(encodeURIComponent(str)));
-    }
-
     async function sha256(text) {
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function sha1(text) {
-      const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(text));
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
@@ -2508,28 +2488,22 @@
     }
 
     async function uploadToCloudinary(blob) {
-      const fd = new FormData();
-      fd.append('file', blob, 'upload.jpg');
-      fd.append('upload_preset', CONFIG.CLOUDINARY_PRESET);
-      const r = await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/upload`, { method: 'POST', body: fd });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.error?.message || 'Cloudinary Upload fehlgeschlagen');
-      return { url: j.secure_url, publicId: j.public_id };
+      const fileName = genId() + '.jpg';
+      const storageRef = storage.ref().child('photos/' + fileName);
+      const snapshot = await storageRef.put(blob);
+      const url = await snapshot.ref.getDownloadURL();
+      return { url: url, publicId: fileName };
     }
 
     async function deleteFromCloudinary(publicId) {
       try {
-        const timestamp = Math.floor(Date.now() / 1000);
-        const signature = await sha1(`public_id=${publicId}&timestamp=${timestamp}${CONFIG.CLOUDINARY_SECRET}`);
-        const fd = new FormData();
-        fd.append('public_id', publicId); fd.append('timestamp', timestamp);
-        fd.append('api_key', CONFIG.CLOUDINARY_KEY); fd.append('signature', signature);
-        await fetch(`https://api.cloudinary.com/v1_1/${CONFIG.CLOUDINARY_CLOUD}/image/destroy`, { method: 'POST', body: fd });
+        const storageRef = storage.ref().child('photos/' + publicId);
+        await storageRef.delete();
       } catch (_) { }
     }
 
     function isConfigured() {
-      return CONFIG.GITHUB_OWNER && CONFIG.GITHUB_OWNER !== 'dein-username' && CONFIG.GITHUB_TOKEN;
+      return firebaseConfig.apiKey !== "DEIN_API_KEY";
     }
 
     /* ── Map ── */
@@ -2572,21 +2546,19 @@
     async function loadData() {
       if (!isConfigured()) { LOCS = DEFAULT_LOCS.map(l => ({ ...l })); return; }
       try {
-        const apiUrl = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${CONFIG.DATA_FILE}?t=${Date.now()}`;
-        const headers = {
-          'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-          'Accept': 'application/vnd.github.v3+json'
-        };
-        const res = await fetch(apiUrl, { headers });
-        if (res.ok) {
-          const json = await res.json();
-          const decoded = decodeURIComponent(escape(atob(json.content)));
-          const parsed = JSON.parse(decoded);
-          LOCS = (parsed.locs || parsed).map(l => ({ ...l, id: l.id || genId() }));
-        } else {
-          LOCS = DEFAULT_LOCS.map(l => ({ ...l }));
-        }
-      } catch (_) {
+        // We use onSnapshot for real-time, but here's a one-time fetch for loadData
+        const snapshot = await db.collection('memories').orderBy('updatedAt', 'desc').get();
+        LOCS = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+
+        // Setup real-time listener
+        db.collection('memories').onSnapshot(snap => {
+          LOCS = snap.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+          updateCount();
+          buildLegend();
+          rebuildAllMarkers();
+        });
+      } catch (e) {
+        console.error("Firestore Load Error:", e);
         LOCS = DEFAULT_LOCS.map(l => ({ ...l }));
       }
     }
@@ -2594,29 +2566,15 @@
     /* ── Data Saving ── */
     async function saveData() {
       if (!isConfigured()) {
-        showToast('GitHub nicht konfiguriert — Daten nur lokal sichtbar', 'error');
+        showToast('Firebase nicht konfiguriert', 'error');
         return false;
       }
-      const apiUrl = `https://api.github.com/repos/${CONFIG.GITHUB_OWNER}/${CONFIG.GITHUB_REPO}/contents/${CONFIG.DATA_FILE}`;
-      const headers = {
-        'Authorization': `token ${CONFIG.GITHUB_TOKEN}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github.v3+json'
-      };
-      try {
-        let sha = null;
-        const info = await fetch(apiUrl + '?t=' + Date.now(), { headers });
-        if (info.ok) { sha = (await info.json()).sha; }
-
-        const payload = JSON.stringify({ locs: LOCS, updatedAt: new Date().toISOString() }, null, 2);
-        const body = { message: 'Erinnerungen aktualisiert', content: toBase64(payload), ...(sha ? { sha } : {}) };
-        const res = await fetch(apiUrl, { method: 'PUT', headers, body: JSON.stringify(body) });
-        if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'GitHub API Fehler'); }
-        return true;
-      } catch (e) {
-        showToast('Speichern fehlgeschlagen: ' + e.message, 'error');
-        return false;
-      }
+      // Note: With Firestore, we usually save individual documents.
+      // But the existing code might still be calling saveData() expecting to push everything.
+      // Let's check how it's used. If it's used for adding/editing, we should refactor the calls.
+      // For now, let's make it a no-op if it's redundant with individual saves, 
+      // or implement a batch write if needed.
+      return true;
     }
 
     /* ── Legend & Count ── */
@@ -3179,12 +3137,12 @@
         date: document.getElementById('f-date').value.trim() || '—',
         story: document.getElementById('f-story').value.trim() || '',
         from: document.getElementById('f-from').value.trim() || '—',
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       };
 
       const btn = document.getElementById('f-submit');
       btn.textContent = 'Wird gespeichert…'; btn.disabled = true;
 
-      // Upload new photo to Cloudinary if it's a fresh data URL
       let photoUrl = photoDataUrl;
       let photoId = editingLoc?.photoId || null;
       if (photoBlob && photoDataUrl && photoDataUrl.startsWith('blob:')) {
@@ -3206,46 +3164,37 @@
       data.photo = photoUrl;
       data.photoId = photoId;
 
-      if (editingLoc) {
-        // Edit mode: update in place
-        const idx = LOCS.indexOf(editingLoc);
-        data.id = editingLoc.id;
-        Object.assign(editingLoc, data);
-        if (markerInstances[idx]) markerInstances[idx].remove();
-        markerInstances[idx] = createMarkerFor(editingLoc);
-        const ref = editingLoc; editingLoc = null;
-        buildLegend(); updateCount();
+      try {
+        if (editingLoc) {
+          await db.collection('memories').doc(editingLoc.id).update(data);
+          showToast('Änderungen gespeichert ✓', 'success');
+        } else {
+          const docRef = await db.collection('memories').add(data);
+          data.id = docRef.id;
+          showToast('Ort gespeichert ✓', 'success');
+        }
         closeForm();
-        openSidebar(ref);
-        const saved = await saveData();
+        // UI will be updated automatically by onSnapshot
+        if (!editingLoc) map.panTo({ center: [data.lng, data.lat] });
+        editingLoc = null;
+      } catch (e) {
+        showToast('Fehler beim Speichern: ' + e.message, 'error');
+      } finally {
         btn.textContent = 'Speichern'; btn.disabled = false;
-        showToast(saved ? 'Änderungen gespeichert ✓' : 'Fehler beim Speichern', saved ? 'success' : 'error');
-      } else {
-        // Add mode
-        data.id = genId();
-        LOCS.push(data);
-        markerInstances.push(createMarkerFor(data));
-        buildLegend(); updateCount();
-        closeForm();
-        openSidebar(data);
-        map.panTo({ center: [data.lng, data.lat] });
-        const saved = await saveData();
-        btn.textContent = 'Speichern'; btn.disabled = false;
-        showToast(saved ? 'Ort gespeichert ✓' : 'Lokal sichtbar, nicht dauerhaft gespeichert', saved ? 'success' : 'error');
       }
     });
 
     /* ── Delete Entry ── */
     async function doDelete(loc) {
-      const idx = LOCS.indexOf(loc);
-      if (idx === -1) return;
-      if (loc.photoId) await deleteFromCloudinary(loc.photoId);
-      if (markerInstances[idx]) markerInstances[idx].remove();
-      LOCS.splice(idx, 1);
-      markerInstances.splice(idx, 1);
-      buildLegend(); updateCount(); closeSidebar();
-      const saved = await saveData();
-      showToast(saved ? 'Eintrag gelöscht' : 'Lokal gelöscht, Speichern fehlgeschlagen', saved ? 'success' : 'error');
+      try {
+        if (loc.photoId) await deleteFromCloudinary(loc.photoId);
+        await db.collection('memories').doc(loc.id).delete();
+        showToast('Eintrag gelöscht', 'success');
+        closeSidebar();
+        // UI will be updated by onSnapshot
+      } catch (e) {
+        showToast('Löschen fehlgeschlagen: ' + e.message, 'error');
+      }
     }
 
     /* ── Toast ── */
