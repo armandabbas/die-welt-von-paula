@@ -27,6 +27,7 @@
     body {
       margin: 0;
       padding: 0;
+      height: 100%;
       background: none;
     }
 
@@ -111,7 +112,7 @@
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
+      height: 100dvh;
       z-index: 0;
     }
 
@@ -1355,7 +1356,7 @@
     /* ── Mobile / iPhone Global Fixes ── */
     :root {
       --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 20px);
     }
 
     body {
