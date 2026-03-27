@@ -1625,6 +1625,21 @@
       .suggestion-item {
         padding: 13px 12px;
       }
+
+      /* Sidebar photo: constrain height on mobile */
+      #sidebar-photo-wrap img {
+        max-height: 30dvh;
+        object-fit: cover;
+      }
+
+      /* Sidebar text: prevent overflow */
+      #sidebar-story {
+        word-break: break-word;
+      }
+
+      #sidebar-name {
+        word-break: break-word;
+      }
     }
 
     /* ── Controls ── */
@@ -1863,6 +1878,7 @@
       border-radius: 2px;
       border: 0.5px solid rgba(210, 204, 196, 0.45);
       margin-bottom: 26px;
+      object-fit: cover;
     }
 
     .sc-from-label {
@@ -1910,10 +1926,17 @@
 
       .sc-name {
         font-size: 30px;
+        word-break: break-word;
       }
 
       .sc-story {
         font-size: 16px;
+        word-break: break-word;
+      }
+
+      .sc-photo {
+        max-height: 28dvh;
+        object-fit: cover;
       }
     }
 
@@ -2847,11 +2870,13 @@
       wrap.innerHTML = '';
       if (loc.photo) {
         const img = new Image();
+        img.loading = 'lazy';
         img.src = loc.photo; img.alt = loc.name || '';
         img.style.cssText = 'width:100%;display:block;border-radius:2px;border:0.5px solid rgba(210,204,196,0.5);cursor:zoom-in;transition:opacity 0.15s';
         img.addEventListener('mouseenter', () => img.style.opacity = '0.86');
         img.addEventListener('mouseleave', () => img.style.opacity = '1');
         img.addEventListener('click', () => openLightbox(loc.photo));
+        img.onerror = () => { wrap.style.marginBottom = '0'; img.remove(); };
         wrap.appendChild(img);
         wrap.style.marginBottom = '24px';
       } else {
@@ -3237,11 +3262,24 @@
     document.getElementById('add-btn').addEventListener('click', openAddForm);
 
     /* ── Shuffle ── */
+    let shuffleHistory = [];
     document.getElementById('shuffle-btn').addEventListener('click', () => {
       const pool = LOCS.filter(l => isLocVisible(l));
       if (!pool.length) { showToast('Noch keine Erinnerungen vorhanden', 'info'); return; }
       closeSidebar();
-      const loc = pool[Math.floor(Math.random() * pool.length)];
+      // Filter out already-seen locations
+      let unseen = pool.filter(l => !shuffleHistory.includes(l.id));
+      // If all have been shown, reset history but exclude the last one to avoid immediate repeat
+      if (!unseen.length) {
+        const lastId = shuffleHistory[shuffleHistory.length - 1];
+        shuffleHistory = lastId ? [lastId] : [];
+        unseen = pool.filter(l => l.id !== lastId);
+        if (!unseen.length) unseen = pool; // only one location total
+      }
+      // Use crypto for better randomness
+      const rng = crypto.getRandomValues(new Uint32Array(1))[0] / (0xFFFFFFFF + 1);
+      const loc = unseen[Math.floor(rng * unseen.length)];
+      shuffleHistory.push(loc.id);
       const idx = LOCS.indexOf(loc);
       map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, duration: 11000 });
       openSidebar(loc);
@@ -3300,7 +3338,6 @@
     });
 
     /* ── Story Mode ── */
-    let storyObserver = null;
 
     function buildStoryCards() {
       const scroll = document.getElementById('story-scroll');
@@ -3318,7 +3355,7 @@
         <div class="sc-date">${loc.date || ''}</div>
         <div class="sc-rule"></div>
         <div class="sc-story" data-story="${(loc.story || '').replace(/"/g, '&quot;')}"></div>
-        ${loc.photo ? `<img class="sc-photo" src="${loc.photo}" alt="${loc.name}" style="cursor:zoom-in" />` : ''}
+        ${loc.photo ? `<img class="sc-photo" loading="lazy" src="${loc.photo}" alt="${loc.name}" style="cursor:zoom-in" onerror="this.style.display='none'" />` : ''}
         <div class="sc-from-label">Erinnerung von</div>
         <div class="sc-from-name">${loc.from || '—'}</div>
       `;
@@ -3328,6 +3365,31 @@
         }
       });
       return locs;
+    }
+
+    let storyScrollHandler = null;
+    let activeStoryIdx = -1;
+
+    function activateStoryCard(cardEl, idx, locs, total) {
+      if (idx === activeStoryIdx) return;
+      activeStoryIdx = idx;
+      document.querySelectorAll('.story-card').forEach(c => {
+        if (c !== cardEl) {
+          c.classList.remove('active');
+          const st = c.querySelector('.sc-story');
+          if (st) st.textContent = '';
+        }
+      });
+      cardEl.classList.add('active');
+      const storyEl = cardEl.querySelector('.sc-story');
+      if (storyEl && !storyEl.textContent) typeWords(storyEl, storyEl.dataset.story || '');
+      document.getElementById('story-progress-fill').style.width = ((idx + 1) / total * 100) + '%';
+      const loc = locs[idx];
+      if (loc) {
+        const isMobile = window.innerWidth <= 500;
+        const offset = isMobile ? [0, 0] : [-210, 0];
+        map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 11000 });
+      }
     }
 
     function enterStoryMode() {
@@ -3341,49 +3403,36 @@
 
       const cards = document.querySelectorAll('.story-card');
       const scroll = document.getElementById('story-scroll');
+      activeStoryIdx = -1;
 
-      storyObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting) {
-            const stEl = entry.target.querySelector('.sc-story');
-            if (stEl) stEl.textContent = '';
-            return;
-          }
-          document.querySelectorAll('.story-card').forEach(c => c.classList.remove('active'));
-          entry.target.classList.add('active');
-          const storyEl = entry.target.querySelector('.sc-story');
-          if (storyEl) typeWords(storyEl, storyEl.dataset.story || '');
-          const idx = parseInt(entry.target.dataset.idx);
-          document.getElementById('story-progress-fill').style.width = ((idx + 1) / total * 100) + '%';
-          const loc = locs[idx];
-          if (loc) {
-            const isMobile = window.innerWidth <= 500;
-            const offset = isMobile ? [0, 0] : [-210, 0];
-            map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 11000 });
-          }
+      // Use scroll listener — reliable on all mobile devices
+      storyScrollHandler = () => {
+        const scrollTop = scroll.scrollTop;
+        const viewH = scroll.clientHeight;
+        let bestIdx = 0;
+        let bestOverlap = 0;
+        cards.forEach((card, i) => {
+          const top = card.offsetTop - scrollTop;
+          const bottom = top + card.offsetHeight;
+          const visTop = Math.max(0, top);
+          const visBottom = Math.min(viewH, bottom);
+          const overlap = Math.max(0, visBottom - visTop);
+          if (overlap > bestOverlap) { bestOverlap = overlap; bestIdx = i; }
         });
-      }, { root: scroll, threshold: 0.55 });
+        activateStoryCard(cards[bestIdx], bestIdx, locs, total);
+      };
+      scroll.addEventListener('scroll', storyScrollHandler, { passive: true });
 
-      cards.forEach(c => storyObserver.observe(c));
-      // Trigger first card immediately
-      if (cards[0]) {
-        cards[0].classList.add('active');
-        const firstStoryEl = cards[0].querySelector('.sc-story');
-        if (firstStoryEl) typeWords(firstStoryEl, firstStoryEl.dataset.story || '');
-        const loc = locs[0];
-        if (loc) {
-          const isMobile = window.innerWidth <= 500;
-          const offset = isMobile ? [0, 0] : [-210, 0];
-          map.flyTo({ center: [loc.lng, loc.lat], zoom: 16, pitch: 55, bearing: -17, offset: [offset[0], offset[1]], duration: 11000 });
-        }
-        document.getElementById('story-progress-fill').style.width = (1 / total * 100) + '%';
-      }
+      // Activate first card
+      if (cards[0]) activateStoryCard(cards[0], 0, locs, total);
     }
 
     function exitStoryMode() {
       document.getElementById('story-panel').classList.remove('open');
       document.getElementById('shuffle-btn').style.cssText = '';
-      if (storyObserver) { storyObserver.disconnect(); storyObserver = null; }
+      const scroll = document.getElementById('story-scroll');
+      if (storyScrollHandler) { scroll.removeEventListener('scroll', storyScrollHandler); storyScrollHandler = null; }
+      activeStoryIdx = -1;
     }
 
     document.getElementById('story-btn').addEventListener('click', enterStoryMode);
