@@ -269,6 +269,7 @@
 
     #sidebar-photo-wrap {
       margin-bottom: 24px;
+      position: relative;
     }
 
     #sidebar-photo-wrap img {
@@ -278,6 +279,32 @@
       border: 0.5px solid rgba(210, 204, 196, 0.5);
       cursor: zoom-in;
       transition: opacity 0.15s;
+    }
+
+    /* ── Photo Download Button ── */
+    .photo-dl-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 30px;
+      height: 30px;
+      background: rgba(252, 250, 248, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 0.5px solid rgba(210, 204, 196, 0.6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #7a7470;
+      transition: all 0.15s;
+      z-index: 5;
+    }
+
+    .photo-dl-btn:hover {
+      background: rgba(255, 255, 255, 0.95);
+      color: #1a1714;
     }
 
     #sidebar-photo-wrap img:hover {
@@ -1872,12 +1899,16 @@
     }
 
 
+    .sc-photo-wrap {
+      position: relative;
+      margin-bottom: 26px;
+    }
+
     .sc-photo {
       width: 100%;
       display: block;
       border-radius: 2px;
       border: 0.5px solid rgba(210, 204, 196, 0.45);
-      margin-bottom: 26px;
     }
 
     .sc-from-label {
@@ -2490,6 +2521,28 @@
     /* ── Utils ── */
     function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+    function createDlBtn(photoUrl, name) {
+      const btn = document.createElement('button');
+      btn.className = 'photo-dl-btn';
+      btn.title = 'Bild herunterladen';
+      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8"/><path d="M4.5 7.5 8 11l3.5-3.5"/><path d="M2 13h12"/></svg>';
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          const res = await fetch(photoUrl);
+          const blob = await res.blob();
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = (name || 'foto') + '.jpg';
+          a.click();
+          URL.revokeObjectURL(a.href);
+        } catch (_) {
+          window.open(photoUrl, '_blank');
+        }
+      });
+      return btn;
+    }
+
     async function sha256(text) {
       const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
       return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -2879,6 +2932,7 @@
         img.addEventListener('click', () => openLightbox(loc.photo));
         img.onerror = () => { wrap.style.marginBottom = '0'; img.remove(); };
         wrap.appendChild(img);
+        wrap.appendChild(createDlBtn(loc.photo, loc.name));
         wrap.style.marginBottom = '24px';
       } else {
         wrap.style.marginBottom = '0';
@@ -3356,13 +3410,15 @@
         <div class="sc-date">${loc.date || ''}</div>
         <div class="sc-rule"></div>
         <div class="sc-story" data-story="${(loc.story || '').replace(/"/g, '&quot;')}"></div>
-        ${loc.photo ? `<img class="sc-photo" loading="lazy" src="${loc.photo}" alt="${loc.name}" style="cursor:zoom-in" onerror="this.style.display='none'" />` : ''}
+        ${loc.photo ? `<div class="sc-photo-wrap"><img class="sc-photo" loading="lazy" src="${loc.photo}" alt="${loc.name}" style="cursor:zoom-in" onerror="this.parentElement.style.display='none'" /></div>` : ''}
         <div class="sc-from-label">Erinnerung von</div>
         <div class="sc-from-name">${loc.from || '—'}</div>
       `;
         scroll.appendChild(card);
         if (loc.photo) {
+          const photoWrap = card.querySelector('.sc-photo-wrap');
           card.querySelector('.sc-photo').addEventListener('click', () => openLightbox(loc.photo));
+          photoWrap.appendChild(createDlBtn(loc.photo, loc.name));
         }
       });
       return locs;
