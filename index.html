@@ -2484,6 +2484,7 @@
     let isLoveUnlocked = false;
     let loveTitleClicks = 0;
     let loveTitleTimer = null;
+    let homeTitleTimer = null;
     let activeFilter = null;
 
     /* ── Utils ── */
@@ -2790,6 +2791,7 @@
       clearTimeout(loveTitleTimer);
       if (loveTitleClicks >= 3) {
         loveTitleClicks = 0;
+        clearTimeout(homeTitleTimer); // cancel home animation
         if (!isLoveUnlocked) {
           // Admin skips password — unlocks directly
           if (isAdmin) {
@@ -3484,7 +3486,6 @@
       // Return to home screen on title click
       const topbarTitle = document.getElementById('topbar-title');
       if (topbarTitle) {
-        let homeTitleTimer = null;
         topbarTitle.addEventListener('click', () => {
           // Delay home animation so triple-click love Easter egg can cancel it
           clearTimeout(homeTitleTimer);
