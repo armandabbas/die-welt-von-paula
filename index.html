@@ -3484,45 +3484,36 @@
       // Return to home screen on title click
       const topbarTitle = document.getElementById('topbar-title');
       if (topbarTitle) {
+        let homeTitleTimer = null;
         topbarTitle.addEventListener('click', () => {
-          closeSidebar();
-          closeForm();
+          // Delay home animation so triple-click love Easter egg can cancel it
+          clearTimeout(homeTitleTimer);
+          homeTitleTimer = setTimeout(() => {
+            if (loveTitleClicks > 0) return; // love Easter egg in progress
+            closeSidebar();
+            closeForm();
 
-          const greetingScreen = document.getElementById('greeting-screen');
-          const greetingUi = document.getElementById('greeting-ui');
-          const foldContainer = document.querySelector('.map-fold-container');
+            const greetingScreen = document.getElementById('greeting-screen');
+            const greetingUi = document.getElementById('greeting-ui');
+            const foldContainer = document.querySelector('.map-fold-container');
 
-          // 1. Reset map to Europe view
-          const isMobile = window.innerWidth <= 500;
-          map.flyTo({
-            center: isMobile ? [13, 44] : [11.5, 48.5],
-            zoom: isMobile ? 3.2 : 4,
-            pitch: 0,
-            bearing: 0,
-            duration: 2500,
-            essential: true
-          });
+            const isMobile = window.innerWidth <= 500;
+            map.flyTo({
+              center: isMobile ? [13, 44] : [11.5, 48.5],
+              zoom: isMobile ? 3.2 : 4,
+              pitch: 0,
+              bearing: 0,
+              duration: 2500,
+              essential: true
+            });
 
-          // 2. Clear markers to avoid visual clutter during reset
-          markerInstances.forEach(m => m.getElement().classList.remove('active'));
+            markerInstances.forEach(m => m.getElement().classList.remove('active'));
 
-          // 3. Sequenced refold
-          greetingScreen.classList.remove('hidden');
-
-          // Outer panels fold back first
-          setTimeout(() => {
-            foldContainer.classList.remove('unfold-step-2');
-          }, 100);
-
-          // Inner panels fold back
-          setTimeout(() => {
-            foldContainer.classList.remove('unfold-step-1');
-          }, 800);
-
-          // Content fades back in
-          setTimeout(() => {
-            greetingUi.classList.remove('hidden');
-          }, 1600);
+            greetingScreen.classList.remove('hidden');
+            setTimeout(() => { foldContainer.classList.remove('unfold-step-2'); }, 100);
+            setTimeout(() => { foldContainer.classList.remove('unfold-step-1'); }, 800);
+            setTimeout(() => { greetingUi.classList.remove('hidden'); }, 1600);
+          }, 950); // Wait longer than the love triple-click window (900ms)
         });
       }
 
