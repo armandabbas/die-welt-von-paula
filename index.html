@@ -2528,16 +2528,27 @@
       btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8"/><path d="M4.5 7.5 8 11l3.5-3.5"/><path d="M2 13h12"/></svg>';
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
+        e.preventDefault();
+        const fileName = (name || 'foto') + '.jpg';
         try {
           const res = await fetch(photoUrl);
           const blob = await res.blob();
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = (name || 'foto') + '.jpg';
-          a.click();
-          URL.revokeObjectURL(a.href);
-        } catch (_) {
-          window.open(photoUrl, '_blank');
+          const file = new File([blob], fileName, { type: blob.type || 'image/jpeg' });
+          // Mobile: use Share API for native "Save to Files" / "Save Image"
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({ files: [file] });
+          } else {
+            // Desktop: blob download
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(a.href);
+          }
+        } catch (err) {
+          if (err.name !== 'AbortError') window.open(photoUrl, '_blank');
         }
       });
       return btn;
