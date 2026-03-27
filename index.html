@@ -1626,10 +1626,10 @@
         padding: 13px 12px;
       }
 
-      /* Sidebar photo: constrain height on mobile */
+      /* Sidebar photo: keep original aspect ratio */
       #sidebar-photo-wrap img {
-        max-height: 30dvh;
-        object-fit: cover;
+        max-width: 100%;
+        height: auto;
       }
 
       /* Sidebar text: prevent overflow */
@@ -1878,7 +1878,6 @@
       border-radius: 2px;
       border: 0.5px solid rgba(210, 204, 196, 0.45);
       margin-bottom: 26px;
-      object-fit: cover;
     }
 
     .sc-from-label {
@@ -1935,8 +1934,8 @@
       }
 
       .sc-photo {
-        max-height: 28dvh;
-        object-fit: cover;
+        max-width: 100%;
+        height: auto;
       }
     }
 
